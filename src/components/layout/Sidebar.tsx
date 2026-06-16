@@ -7,6 +7,8 @@ import { Button } from "../ui/Button";
 import { sidebarNavItems } from "../../data/dashboard";
 import { InputCustom } from "../common/Input";
 import { SelectCustom } from "../common/Select";
+import { CheckboxCustom } from "../common/Checkbox";
+import { RadioGroupCustom } from "../common/Radio";
 
 /* ── Styled components ──────────────────────────────── */
 
@@ -289,10 +291,28 @@ export function Sidebar({ onLogout }: SidebarProps) {
           required
           options={categorias}
           selectedOption={""}
-          onChange={(e) => {}}
+          onChange={() => {}}
           onClear={() => {}}
           error={""}
         />
+        <CheckboxCustom label="Acepto los términos" checked={false} onChange={() => {}} required />
+
+        <RadioGroupCustom
+          title="Tipo de envío"
+          name="envio"
+          direction="row"
+          options={[
+            { id: "normal", title: "Normal" },
+            { id: "express", title: "Express" },
+            { id: "retiro", title: "Retiro en tienda", disabled: true },
+          ]}
+          selectedOption={"normal"}
+          onChange={(value) => {
+            console.log("Opción seleccionada:", value);
+          }}
+          required
+        />
+
         {collapsed ? (
           <LogoutIconButton onClick={onLogout} title="Cerrar sesión">
             <Icon name="logout" size={20} />
