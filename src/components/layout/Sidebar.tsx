@@ -5,6 +5,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Icon } from "../ui/Icon";
 import { Button } from "../ui/Button";
 import { sidebarNavItems } from "../../data/dashboard";
+import { InputCustom } from "../common/Input";
+import { SelectCustom } from "../common/Select";
 
 /* ── Styled components ──────────────────────────────── */
 
@@ -197,6 +199,11 @@ export function Sidebar({ onLogout }: SidebarProps) {
 
   const isActive = (path: string) => location.pathname === path;
 
+  const categorias = [
+    { id: "antibioticos", title: "Antibióticos" },
+    { id: "analgesicos", title: "Analgésicos" },
+  ];
+
   return (
     <Root $collapsed={collapsed}>
       <LogoArea $collapsed={collapsed}>
@@ -265,6 +272,27 @@ export function Sidebar({ onLogout }: SidebarProps) {
       </ToggleArea>
 
       <Footer>
+        <InputCustom
+          label="Buscar producto"
+          icon="inventory_2"
+          onActionClick={(term) => {
+            console.log("Buscar:", term);
+          }}
+          debounceMs={400}
+          minChars={2}
+          onClear={() => {
+            console.log("Búsqueda limpia");
+          }}
+        />
+        <SelectCustom
+          title="Categoría"
+          required
+          options={categorias}
+          selectedOption={""}
+          onChange={(e) => {}}
+          onClear={() => {}}
+          error={""}
+        />
         {collapsed ? (
           <LogoutIconButton onClick={onLogout} title="Cerrar sesión">
             <Icon name="logout" size={20} />
@@ -272,7 +300,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
         ) : (
           <Button variant="primary" fullWidth onClick={onLogout}>
             <Icon name="logout" size={18} />
-            Cerrar sesión
+            Cerrar sesión xd
           </Button>
         )}
       </Footer>

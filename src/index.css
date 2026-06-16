@@ -1,1 +1,22 @@
-/* Styles are managed by styled-components GlobalStyle in src/theme.ts */
+@import "tailwindcss";
+
+/*
+  Theme tokens mirror src/theme.ts so Tailwind utilities (bg-primary,
+  text-text-muted, border-border-strong, …) match the styled-components theme.
+  Global resets, the fluid rem scale and Material Symbols still live in
+  GlobalStyle (src/theme.ts).
+*/
+@theme {
+  --color-primary: #006c75;
+  --color-background: #0f172a;
+  --color-surface: #1e293b;
+  --color-danger: #ef4444;
+  --color-success: #22c55e;
+  --color-warning: #eab308;
+  --color-text: #f1f5f9;
+  --color-text-muted: #64748b;
+  --color-text-subtle: #94a3b8;
+  --color-border: #1e293b;
+  --color-border-strong: #334155;
+  --color-chip: #1e293b;
+}
