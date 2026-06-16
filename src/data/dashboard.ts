@@ -117,7 +117,7 @@ export const quickActions: QuickAction[] = [
 
 export const sidebarNavItems: NavItem[] = [
   { icon: "inventory_2", label: "Inventory", path: "/inventory" },
-  { icon: "point_of_sale", label: "Sales", path: "#" },
+  { icon: "point_of_sale", label: "Sales", path: "/sales" },
   { icon: "group", label: "Patients", path: "#" },
   { icon: "analytics", label: "Reports", path: "#" },
 ];
