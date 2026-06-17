@@ -15,6 +15,9 @@ import InvoicingLayout from "./pages/invoicing/InvoicingLayout";
 import Quotes from "./pages/invoicing/Quotes";
 import Vouchers from "./pages/invoicing/Vouchers";
 import Guides from "./pages/invoicing/Guides";
+import CreditNotes from "./pages/invoicing/CreditNotes";
+import DebitNotes from "./pages/invoicing/DebitNotes";
+import Collections from "./pages/Collections";
 
 function AuthLayout() {
   return (
@@ -35,15 +38,18 @@ const router = createBrowserRouter([
       { path: "/sales",     element: <Sales />     },
       { path: "/settings",  element: <Settings />  },
       { path: "/purchases",  element: <Purchases />  },
-      { path: "/customers",  element: <Customers />  },
+      { path: "/customers",   element: <Customers />   },
+      { path: "/collections", element: <Collections /> },
       {
         path: "/invoicing",
         element: <InvoicingLayout />,
         children: [
           { index: true, element: <Navigate to="/invoicing/quotes" replace /> },
-          { path: "quotes",   element: <Quotes />   },
-          { path: "vouchers", element: <Vouchers /> },
-          { path: "guides",   element: <Guides />   },
+          { path: "quotes",       element: <Quotes />      },
+          { path: "vouchers",     element: <Vouchers />    },
+          { path: "guides",       element: <Guides />      },
+          { path: "credit-notes", element: <CreditNotes /> },
+          { path: "debit-notes",  element: <DebitNotes />  },
         ],
       },
     ],

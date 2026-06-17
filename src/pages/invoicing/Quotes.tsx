@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import styled from "styled-components";
 import { motion } from "framer-motion";
 import { staggerContainer, fadeUp } from "../../lib/variants";
@@ -11,6 +11,10 @@ import { Icon } from "../../components/ui/Icon";
 import { Drawer } from "../../components/common/Drawer";
 import { Pagination } from "../../components/ui/Pagination";
 import { useToast } from "../../components/common/Toast";
+import { Tooltip } from "../../components/ui/Tooltip";
+import { Modal } from "../../components/ui/Modal";
+import { LineItemsEditor } from "../../components/invoicing/LineItemsEditor";
+import type { LineItem } from "../../components/invoicing/LineItemsEditor";
 
 /* ── Layout ──────────────────────────────────────────── */
 
@@ -176,6 +180,75 @@ const TableIconBtn = styled.button`
   &:hover {
     background: ${(p) => p.theme.colors.chipBg};
     color: ${(p) => p.theme.colors.text};
+  }
+`;
+
+/* ── Filter bar ──────────────────────────────────────── */
+
+const FilterBar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.2rem 2.4rem;
+  border-bottom: 1px solid ${(p) => p.theme.colors.border};
+  flex-wrap: wrap;
+`;
+
+const SearchWrap = styled.div`
+  position: relative;
+  flex: 1;
+  min-width: 18rem;
+  max-width: 34rem;
+`;
+
+const SearchIconEl = styled.span`
+  position: absolute;
+  left: 1.2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: ${(p) => p.theme.colors.textMuted};
+  display: flex;
+  pointer-events: none;
+`;
+
+const SearchInput = styled.input`
+  width: 100%;
+  padding: 0.85rem 1.4rem 0.85rem 3.6rem;
+  background: ${(p) => p.theme.colors.inputBg};
+  border: 1.5px solid ${(p) => p.theme.colors.border};
+  border-radius: 0.8rem;
+  font-size: 1.3rem;
+  font-family: inherit;
+  color: ${(p) => p.theme.colors.text};
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:focus { border-color: ${(p) => p.theme.colors.primary}; }
+  &::placeholder { color: ${(p) => p.theme.colors.textMuted}; }
+`;
+
+const ChipGroup = styled.div`
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+`;
+
+const Chip = styled.button<{ $active?: boolean }>`
+  padding: 0.5rem 1.2rem;
+  border-radius: 10rem;
+  border: 1.5px solid ${(p) => p.$active ? p.theme.colors.primary : p.theme.colors.border};
+  background: ${(p) => p.$active ? p.theme.colors.primaryBg : "transparent"};
+  color: ${(p) => p.$active ? p.theme.colors.primary : p.theme.colors.textMuted};
+  font-size: 1.2rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+
+  &:hover {
+    border-color: ${(p) => p.theme.colors.primary};
+    color: ${(p) => p.theme.colors.primary};
   }
 `;
 
@@ -418,36 +491,6 @@ const EmptyLabel = styled.p`
   color: ${(p) => p.theme.colors.textMuted};
 `;
 
-const AddLineBtn = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: ${(p) => p.theme.colors.primary};
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  padding: 0;
-
-  &:hover { text-decoration: underline; }
-`;
-
-const CatalogBtn = styled.button`
-  padding: 0.8rem 1.6rem;
-  background: ${(p) => p.theme.colors.surface};
-  border: 1px solid ${(p) => p.theme.colors.border};
-  border-radius: 0.8rem;
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: ${(p) => p.theme.colors.text};
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s;
-
-  &:hover { background: ${(p) => p.theme.colors.chipBg}; }
-`;
 
 const DrawerFooterRow = styled.div`
   display: flex;
@@ -491,6 +534,101 @@ const SendBtn = styled.button`
   &:hover { opacity: 0.88; }
 `;
 
+/* ── Detail drawer ───────────────────────────────────── */
+
+const DetailBody = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 2.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem;
+`;
+
+const DetailSection = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+`;
+
+const SectionTitle = styled.h4`
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: ${(p) => p.theme.colors.textMuted};
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid ${(p) => p.theme.colors.border};
+`;
+
+const DetailGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.4rem;
+`;
+
+const DetailItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+`;
+
+const ItemLabel = styled.span`
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: ${(p) => p.theme.colors.textMuted};
+`;
+
+const ItemValue = styled.span`
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: ${(p) => p.theme.colors.text};
+`;
+
+const DetailMonospace = styled(ItemValue)`
+  font-family: "Courier New", Courier, monospace;
+`;
+
+/* ── Confirm modal ───────────────────────────────────── */
+
+const ConfirmBody = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+`;
+
+const ConfirmDesc = styled.p`
+  margin: 0;
+  font-size: 1.4rem;
+  color: ${(p) => p.theme.colors.textMuted};
+  line-height: 1.6;
+`;
+
+const ConfirmRecord = styled.div`
+  background: ${(p) => p.theme.colors.chipBg};
+  border: 1px solid ${(p) => p.theme.colors.border};
+  border-radius: 1rem;
+  padding: 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const RecordId = styled.span`
+  font-family: "Courier New", Courier, monospace;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: ${(p) => p.theme.colors.text};
+`;
+
+const RecordSub = styled.span`
+  font-size: 1.3rem;
+  color: ${(p) => p.theme.colors.textMuted};
+`;
+
 /* ── Data ────────────────────────────────────────────── */
 
 type QuoteStatus = "sent" | "accepted" | "expired" | "draft";
@@ -511,6 +649,14 @@ const STATUS_CONFIG: Record<QuoteStatus, { variant: BadgeVariant; label: string 
   draft:    { variant: "neutral", label: "BORRADOR" },
 };
 
+const STATUS_CHIPS: { value: QuoteStatus | "all"; label: string }[] = [
+  { value: "all",      label: "Todos"     },
+  { value: "sent",     label: "Enviados"  },
+  { value: "accepted", label: "Aceptados" },
+  { value: "expired",  label: "Vencidos"  },
+  { value: "draft",    label: "Borradores"},
+];
+
 const QUOTES: Quote[] = [
   { id: "COT-2024-0891", clientName: "Constructora Alianza S.A.C.",     clientRuc: "20556784912", date: "14 Oct, 2024", amount: "S/ 12,450.00", status: "sent"     },
   { id: "COT-2024-0890", clientName: "Distribuidora Norte E.I.R.L.",    clientRuc: "20448123992", date: "12 Oct, 2024", amount: "S/  3,200.00", status: "accepted"  },
@@ -523,7 +669,6 @@ const QUOTES: Quote[] = [
 ];
 
 const PAGE_SIZE = 8;
-const TOTAL_ITEMS = 156;
 
 /* ── Columns ─────────────────────────────────────────── */
 
@@ -574,22 +719,30 @@ function buildColumns(
       render: (r) => (
         <ActionGroup>
           {r.status === "accepted" ? (
-            <FacturarBtn onClick={() => onFacturar(r)}>
-              <Icon name="point_of_sale" size={15} />
-              FACTURAR
-            </FacturarBtn>
+            <Tooltip content="Convertir a factura electrónica" side="top">
+              <FacturarBtn onClick={(e) => { e.stopPropagation(); onFacturar(r); }}>
+                <Icon name="point_of_sale" size={15} />
+                FACTURAR
+              </FacturarBtn>
+            </Tooltip>
           ) : r.status === "expired" ? (
-            <RowIconBtn title="Renovar cotización">
-              <Icon name="refresh" size={18} />
-            </RowIconBtn>
+            <Tooltip content="Renovar cotización" side="top">
+              <RowIconBtn onClick={(e) => e.stopPropagation()}>
+                <Icon name="refresh" size={18} />
+              </RowIconBtn>
+            </Tooltip>
           ) : (
-            <RowIconBtn title="Convertir a factura">
-              <Icon name="receipt_long" size={18} />
-            </RowIconBtn>
+            <Tooltip content="Ver detalles" side="top">
+              <RowIconBtn onClick={(e) => e.stopPropagation()}>
+                <Icon name="receipt_long" size={18} />
+              </RowIconBtn>
+            </Tooltip>
           )}
-          <RowIconBtn title="Más opciones">
-            <Icon name="more_vert" size={18} />
-          </RowIconBtn>
+          <Tooltip content="Más opciones" side="top">
+            <RowIconBtn onClick={(e) => e.stopPropagation()}>
+              <Icon name="more_vert" size={18} />
+            </RowIconBtn>
+          </Tooltip>
         </ActionGroup>
       ),
     },
@@ -599,17 +752,41 @@ function buildColumns(
 /* ── Page ────────────────────────────────────────────── */
 
 export default function Quotes() {
-  const [page, setPage]             = useState(1);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [page, setPage]                     = useState(1);
+  const [search, setSearch]                 = useState("");
+  const [statusFilter, setStatusFilter]     = useState<QuoteStatus | "all">("all");
+  const [drawerOpen, setDrawerOpen]         = useState(false);
+  const [quoteItems, setQuoteItems]         = useState<LineItem[]>([]);
+  const [detailQuote, setDetailQuote]       = useState<Quote | null>(null);
+  const [facturarTarget, setFacturarTarget] = useState<Quote | null>(null);
   const { toast } = useToast();
 
-  const totalPages = Math.ceil(TOTAL_ITEMS / PAGE_SIZE);
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return QUOTES.filter((r) => {
+      const matchText   = !q || r.clientName.toLowerCase().includes(q) || r.id.toLowerCase().includes(q);
+      const matchStatus = statusFilter === "all" || r.status === statusFilter;
+      return matchText && matchStatus;
+    });
+  }, [search, statusFilter]);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const pageData   = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  function applySearch(v: string) { setSearch(v); setPage(1); }
+  function applyStatus(v: QuoteStatus | "all") { setStatusFilter(v); setPage(1); }
 
   function handleFacturar(q: Quote) {
+    setFacturarTarget(q);
+  }
+
+  function confirmFacturar() {
+    if (!facturarTarget) return;
+    setFacturarTarget(null);
     toast({
-      variant: "info",
-      title: "Convirtiendo a factura",
-      description: `${q.id} — ${q.clientName}`,
+      variant: "success",
+      title: "Factura generada",
+      description: `${facturarTarget.id} convertida — enviando a SUNAT…`,
     });
   }
 
@@ -643,8 +820,8 @@ export default function Quotes() {
           </div>
           <HeadingActions>
             <Button variant="outline">
-              <Icon name="filter_list" size={18} />
-              Filtros
+              <Icon name="download" size={18} />
+              Exportar
             </Button>
             <Button variant="primary" onClick={() => setDrawerOpen(true)}>
               <Icon name="add_circle" size={18} />
@@ -697,29 +874,57 @@ export default function Quotes() {
           <TableHeader>
             <TableTitle>Historial de Cotizaciones</TableTitle>
             <div style={{ display: "flex", gap: "0.8rem" }}>
-              <TableIconBtn title="Descargar"><Icon name="download" size={20} /></TableIconBtn>
-              <TableIconBtn title="Imprimir"><Icon name="print" size={20} /></TableIconBtn>
+              <Tooltip content="Descargar Excel" side="top">
+                <TableIconBtn><Icon name="download" size={20} /></TableIconBtn>
+              </Tooltip>
+              <Tooltip content="Imprimir" side="top">
+                <TableIconBtn><Icon name="print" size={20} /></TableIconBtn>
+              </Tooltip>
             </div>
           </TableHeader>
 
+          <FilterBar>
+            <SearchWrap>
+              <SearchIconEl><Icon name="search" size={16} /></SearchIconEl>
+              <SearchInput
+                type="text"
+                placeholder="Buscar por cliente o número..."
+                value={search}
+                onChange={(e) => applySearch(e.target.value)}
+              />
+            </SearchWrap>
+            <ChipGroup>
+              {STATUS_CHIPS.map((c) => (
+                <Chip
+                  key={c.value}
+                  $active={statusFilter === c.value}
+                  onClick={() => applyStatus(c.value)}
+                >
+                  {c.label}
+                </Chip>
+              ))}
+            </ChipGroup>
+          </FilterBar>
+
           <Table
-            data={QUOTES}
+            data={pageData}
             columns={columns}
             keyField="id"
             variant="default"
             density="default"
+            onRowClick={(r) => setDetailQuote(r)}
           />
 
           <PaginationBar>
             <Pagination.Info
               page={page}
               pageSize={PAGE_SIZE}
-              totalItems={TOTAL_ITEMS}
+              totalItems={filtered.length}
               size="sm"
             />
             <Pagination.Pages
               page={page}
-              totalPages={totalPages}
+              totalPages={Math.max(1, totalPages)}
               onPageChange={setPage}
               size="sm"
               siblingCount={1}
@@ -738,7 +943,6 @@ export default function Quotes() {
         side="right"
       >
         <DrawerBody>
-          {/* Step 1 — Cliente */}
           <Step>
             <StepHeader>
               <StepTitle>
@@ -765,27 +969,14 @@ export default function Quotes() {
             </FieldGroup>
           </Step>
 
-          {/* Step 2 — Productos */}
           <Step>
-            <StepHeader>
-              <StepTitle>
-                <StepBadge>2</StepBadge>
-                <StepLabel>Productos / Servicios</StepLabel>
-              </StepTitle>
-              <AddLineBtn type="button">
-                <Icon name="add" size={16} />
-                Agregar Línea
-              </AddLineBtn>
-            </StepHeader>
-
-            <EmptyProducts>
-              <Icon name="inventory" size={40} />
-              <EmptyLabel>No hay productos agregados todavía.</EmptyLabel>
-              <CatalogBtn type="button">Explorar Catálogo</CatalogBtn>
-            </EmptyProducts>
+            <StepTitle>
+              <StepBadge>2</StepBadge>
+              <StepLabel>Productos / Servicios</StepLabel>
+            </StepTitle>
+            <LineItemsEditor items={quoteItems} onChange={setQuoteItems} />
           </Step>
 
-          {/* Step 3 — Condiciones */}
           <Step>
             <StepTitle>
               <StepBadge>3</StepBadge>
@@ -810,6 +1001,11 @@ export default function Quotes() {
                 </FieldSelect>
               </FieldGroup>
             </FieldGrid2>
+
+            <FieldGroup>
+              <FieldLabel>Observaciones</FieldLabel>
+              <FieldInput as="textarea" placeholder="Condiciones comerciales, notas..." style={{ minHeight: "7rem", resize: "vertical" }} />
+            </FieldGroup>
           </Step>
         </DrawerBody>
 
@@ -823,6 +1019,121 @@ export default function Quotes() {
           </DrawerFooterRow>
         </Drawer.Footer>
       </Drawer>
+
+      {/* Detail drawer */}
+      <Drawer
+        open={!!detailQuote}
+        onClose={() => setDetailQuote(null)}
+        title={detailQuote?.id ?? ""}
+        description="Detalle de cotización"
+        size="md"
+        side="right"
+      >
+        {detailQuote && (
+          <>
+            <DetailBody>
+              <DetailSection>
+                <SectionTitle>Información General</SectionTitle>
+                <DetailGrid>
+                  <DetailItem>
+                    <ItemLabel>Número</ItemLabel>
+                    <DetailMonospace>{detailQuote.id}</DetailMonospace>
+                  </DetailItem>
+                  <DetailItem>
+                    <ItemLabel>Estado</ItemLabel>
+                    <Badge
+                      variant={STATUS_CONFIG[detailQuote.status].variant}
+                      dot
+                      pill
+                      size="sm"
+                    >
+                      {STATUS_CONFIG[detailQuote.status].label}
+                    </Badge>
+                  </DetailItem>
+                  <DetailItem>
+                    <ItemLabel>Fecha</ItemLabel>
+                    <ItemValue>{detailQuote.date}</ItemValue>
+                  </DetailItem>
+                  <DetailItem>
+                    <ItemLabel>Monto Total</ItemLabel>
+                    <DetailMonospace>{detailQuote.amount}</DetailMonospace>
+                  </DetailItem>
+                </DetailGrid>
+              </DetailSection>
+
+              <DetailSection>
+                <SectionTitle>Cliente</SectionTitle>
+                <DetailGrid>
+                  <DetailItem style={{ gridColumn: "span 2" }}>
+                    <ItemLabel>Razón Social</ItemLabel>
+                    <ItemValue>{detailQuote.clientName}</ItemValue>
+                  </DetailItem>
+                  <DetailItem>
+                    <ItemLabel>RUC / DNI</ItemLabel>
+                    <DetailMonospace>{detailQuote.clientRuc}</DetailMonospace>
+                  </DetailItem>
+                </DetailGrid>
+              </DetailSection>
+
+              <DetailSection>
+                <SectionTitle>Productos / Servicios</SectionTitle>
+                <EmptyProducts>
+                  <Icon name="inventory" size={36} />
+                  <EmptyLabel>No hay líneas de detalle disponibles en modo demo.</EmptyLabel>
+                </EmptyProducts>
+              </DetailSection>
+            </DetailBody>
+
+            <Drawer.Footer>
+              <DrawerFooterRow>
+                <DraftBtn type="button" onClick={() => setDetailQuote(null)}>Cerrar</DraftBtn>
+                {detailQuote.status === "accepted" && (
+                  <SendBtn
+                    type="button"
+                    onClick={() => {
+                      setDetailQuote(null);
+                      setFacturarTarget(detailQuote);
+                    }}
+                  >
+                    <Icon name="point_of_sale" size={18} />
+                    Facturar
+                  </SendBtn>
+                )}
+              </DrawerFooterRow>
+            </Drawer.Footer>
+          </>
+        )}
+      </Drawer>
+
+      {/* FACTURAR confirmation modal */}
+      <Modal
+        open={!!facturarTarget}
+        onClose={() => setFacturarTarget(null)}
+        title="Convertir a Factura Electrónica"
+        description="Esta acción generará un comprobante electrónico y lo enviará a SUNAT"
+        size="sm"
+      >
+        <ConfirmBody>
+          <ConfirmDesc>
+            Se emitirá una factura electrónica a nombre del cliente por el monto indicado.
+            Una vez confirmada, la cotización pasará al estado <strong>Facturado</strong> y no podrá modificarse.
+          </ConfirmDesc>
+          {facturarTarget && (
+            <ConfirmRecord>
+              <RecordId>{facturarTarget.id}</RecordId>
+              <RecordSub>{facturarTarget.clientName}</RecordSub>
+              <RecordSub style={{ marginTop: "0.4rem", fontWeight: 700 }}>{facturarTarget.amount}</RecordSub>
+            </ConfirmRecord>
+          )}
+        </ConfirmBody>
+        <Modal.Footer>
+          <Button variant="outline" onClick={() => setFacturarTarget(null)}>Cancelar</Button>
+          <Button variant="primary" onClick={confirmFacturar}>
+            <Icon name="point_of_sale" size={16} />
+            Confirmar y Emitir
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </ContentArea>
   );
 }
