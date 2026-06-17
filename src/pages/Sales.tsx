@@ -205,6 +205,7 @@ export default function Sales() {
   const [lgOpen, setLgOpen] = useState(false);
   const [loadingDemo, setLoadingDemo] = useState(true);
   const [dismissedAlert, setDismissedAlert] = useState(false);
+  const [removedTags, setRemovedTags] = useState<string[]>([]);
 
   const [drawerRightOpen, setDrawerRightOpen] = useState(false);
   const [drawerLeftOpen, setDrawerLeftOpen] = useState(false);
@@ -411,13 +412,117 @@ export default function Sales() {
           <Section variants={fadeUp}>
             <SectionTitle>Badge</SectionTitle>
             <SectionCard>
+
               <Row>
+                <Label>Subtle</Label>
                 <Badge variant="primary">Primary</Badge>
                 <Badge variant="success">Success</Badge>
                 <Badge variant="danger">Danger</Badge>
                 <Badge variant="warning">Warning</Badge>
                 <Badge variant="neutral">Neutral</Badge>
               </Row>
+              <Divider />
+              <Row>
+                <Label>Solid</Label>
+                <Badge appearance="solid" variant="primary">Primary</Badge>
+                <Badge appearance="solid" variant="success">Success</Badge>
+                <Badge appearance="solid" variant="danger">Danger</Badge>
+                <Badge appearance="solid" variant="warning">Warning</Badge>
+                <Badge appearance="solid" variant="neutral">Neutral</Badge>
+              </Row>
+              <Divider />
+              <Row>
+                <Label>Outline</Label>
+                <Badge appearance="outline" variant="primary">Primary</Badge>
+                <Badge appearance="outline" variant="success">Success</Badge>
+                <Badge appearance="outline" variant="danger">Danger</Badge>
+                <Badge appearance="outline" variant="warning">Warning</Badge>
+                <Badge appearance="outline" variant="neutral">Neutral</Badge>
+              </Row>
+              <Divider />
+
+              <Row>
+                <Label>Tamaños</Label>
+                <Badge size="sm" variant="primary">Small</Badge>
+                <Badge size="md" variant="primary">Medium</Badge>
+                <Badge size="lg" variant="primary">Large</Badge>
+                <Badge size="sm" appearance="solid" variant="success">sm</Badge>
+                <Badge size="md" appearance="solid" variant="success">md</Badge>
+                <Badge size="lg" appearance="solid" variant="success">lg</Badge>
+              </Row>
+              <Divider />
+
+              <Row>
+                <Label>Pill</Label>
+                <Badge pill variant="primary">Primary</Badge>
+                <Badge pill appearance="solid" variant="success">Activo</Badge>
+                <Badge pill appearance="outline" variant="danger">Crítico</Badge>
+                <Badge pill appearance="solid" variant="warning">Revisar</Badge>
+                <Badge pill variant="neutral">Neutro</Badge>
+              </Row>
+              <Divider />
+
+              <Row>
+                <Label>Con punto</Label>
+                <Badge dot variant="success">En línea</Badge>
+                <Badge dot variant="warning">Pendiente</Badge>
+                <Badge dot variant="danger">Desconectado</Badge>
+                <Badge dot pill variant="primary">Activo</Badge>
+                <Badge dot variant="neutral">Inactivo</Badge>
+              </Row>
+              <Divider />
+
+              <Row>
+                <Label>Con ícono</Label>
+                <Badge icon="check_circle" variant="success">Aprobado</Badge>
+                <Badge icon="error" appearance="solid" variant="danger">Error crítico</Badge>
+                <Badge icon="warning" variant="warning">Alerta</Badge>
+                <Badge icon="schedule" appearance="outline" variant="neutral">Pendiente</Badge>
+                <Badge icon="star" appearance="solid" variant="primary">Destacado</Badge>
+              </Row>
+              <Divider />
+
+              <Row>
+                <Label>Interactivo</Label>
+                <Badge variant="primary" onClick={() => {}}>Cliqueable</Badge>
+                <Badge appearance="outline" variant="success" onClick={() => {}}>Ver más</Badge>
+                <Badge icon="add" appearance="solid" variant="primary" pill onClick={() => {}}>
+                  Agregar
+                </Badge>
+                <Badge icon="filter_list" appearance="outline" variant="neutral" size="sm" onClick={() => {}}>
+                  Filtrar
+                </Badge>
+              </Row>
+              <Divider />
+
+              <Row>
+                <Label>Etiquetas</Label>
+                {["React", "TypeScript", "Vite", "styled-components", "Tailwind"].map(
+                  (tag) =>
+                    !removedTags.includes(tag) && (
+                      <Badge
+                        key={tag}
+                        appearance="outline"
+                        variant="neutral"
+                        pill
+                        onRemove={() => setRemovedTags((prev) => [...prev, tag])}
+                      >
+                        {tag}
+                      </Badge>
+                    ),
+                )}
+                {removedTags.length > 0 && (
+                  <Badge
+                    appearance="subtle"
+                    variant="primary"
+                    icon="refresh"
+                    onClick={() => setRemovedTags([])}
+                  >
+                    Restaurar
+                  </Badge>
+                )}
+              </Row>
+
             </SectionCard>
           </Section>
 
