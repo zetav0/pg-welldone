@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { of } from "rxjs";
 import styled from "styled-components";
 import { motion } from "framer-motion";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { staggerContainer, fadeUp } from "../lib/variants";
 
 import { Table } from "../components/ui/Table";
@@ -13,6 +12,9 @@ import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
 import { useToast } from "../components/common/Toast";
+import { InputCustom } from "../components/common/Input";
+import { RestApi } from "@/services/restApi";
+import { useApp } from "@/context/AppContext";
 
 /* ── Layout ──────────────────────────────────────────── */
 
@@ -178,102 +180,6 @@ const FormGroupFull = styled(FormGroup)`
   grid-column: 1 / -1;
 `;
 
-const FormLabel = styled.label`
-  font-size: 1.1rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: ${(p) => p.theme.colors.textMuted};
-`;
-
-const StyledInput = styled.input`
-  width: 100%;
-  background: ${(p) => p.theme.colors.inputBg};
-  border: 1.5px solid ${(p) => p.theme.colors.border};
-  border-radius: 0.8rem;
-  padding: 1.1rem 1.4rem;
-  font-size: 1.4rem;
-  font-family: inherit;
-  color: ${(p) => p.theme.colors.text};
-  transition: border-color 0.15s, box-shadow 0.15s;
-  outline: none;
-
-  &:focus {
-    border-color: ${(p) => p.theme.colors.primary};
-    box-shadow: 0 0 0 3px ${(p) => p.theme.colors.primaryBg};
-  }
-`;
-
-const MonoInput = styled(StyledInput)`
-  font-family: "Courier New", Courier, monospace;
-  font-weight: 600;
-`;
-
-const SmallInput = styled(StyledInput)`
-  padding: 0.8rem 1.2rem;
-  font-size: 1.3rem;
-`;
-
-const PasswordWrap = styled.div`
-  position: relative;
-`;
-
-const VisibilityBtn = styled.button`
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  padding: 0.2rem;
-  cursor: pointer;
-  color: ${(p) => p.theme.colors.textMuted};
-  display: flex;
-  align-items: center;
-  transition: color 0.15s;
-
-  &:hover {
-    color: ${(p) => p.theme.colors.text};
-  }
-`;
-
-/* ── Upload zone ─────────────────────────────────────── */
-
-const UploadZone = styled.div`
-  border: 2px dashed ${(p) => p.theme.colors.borderStrong};
-  border-radius: 1.2rem;
-  padding: 3.2rem 2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: ${(p) => p.theme.colors.inputBg};
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-  text-align: center;
-  gap: 0.6rem;
-
-  &:hover {
-    background: ${(p) => p.theme.colors.chipBg};
-    border-color: ${(p) => p.theme.colors.primary};
-  }
-`;
-
-const UploadLabel = styled.p`
-  margin: 0;
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: ${(p) => p.theme.colors.text};
-`;
-
-const UploadSub = styled.p`
-  margin: 0;
-  font-size: 1.1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: ${(p) => p.theme.colors.textMuted};
-`;
-
 /* ── SUNAT config ────────────────────────────────────── */
 
 const CertRow = styled.div`
@@ -325,7 +231,9 @@ const OutlineFullBtn = styled.button`
   letter-spacing: 0.06em;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 
   &:hover {
     background: ${(p) => p.theme.colors.primary};
@@ -376,7 +284,9 @@ const SwitchTrack = styled.div<{ $on: boolean }>`
   background: ${(p) => (p.$on ? p.theme.colors.primary : p.theme.colors.chipBg)};
   border: 1.5px solid ${(p) => (p.$on ? p.theme.colors.primary : p.theme.colors.borderStrong)};
   position: relative;
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 
   &::after {
     content: "";
@@ -454,7 +364,9 @@ const ActionIconBtn = styled.button<{ $danger?: boolean }>`
   display: flex;
   align-items: center;
   color: ${(p) => p.theme.colors.textMuted};
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 
   &:hover {
     background: ${(p) => (p.$danger ? p.theme.colors.dangerBg : p.theme.colors.primaryBg)};
@@ -491,7 +403,9 @@ const SectionLink = styled.button`
   font-family: inherit;
   padding: 0;
 
-  &:hover { text-decoration: underline; }
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 const UsersList = styled.div`
@@ -510,7 +424,9 @@ const UserItem = styled.div`
   border-radius: 1rem;
   transition: border-color 0.15s;
 
-  &:hover { border-color: ${(p) => p.theme.colors.borderStrong}; }
+  &:hover {
+    border-color: ${(p) => p.theme.colors.borderStrong};
+  }
 `;
 
 const UserLeft = styled.div`
@@ -569,7 +485,9 @@ const MoreButton = styled.button`
   display: flex;
   padding: 0.4rem;
   border-radius: 0.6rem;
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
 
   &:hover {
     color: ${(p) => p.theme.colors.text};
@@ -597,7 +515,10 @@ const AdminCard = styled.button`
   border-radius: 1.2rem;
   cursor: pointer;
   font-family: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s,
+    transform 0.12s;
 
   &:hover {
     border-color: ${(p) => p.theme.colors.primary};
@@ -605,7 +526,9 @@ const AdminCard = styled.button`
     transform: translateY(-1px);
   }
 
-  &:active { transform: scale(0.97); }
+  &:active {
+    transform: scale(0.97);
+  }
 `;
 
 const AdminCardIcon = styled.span`
@@ -655,10 +578,12 @@ const Bar = styled.div<{ $h: number; $strong?: boolean }>`
   flex: 1;
   height: ${(p) => p.$h}%;
   border-radius: 0.4rem 0.4rem 0 0;
-  background: ${(p) => p.$strong ? p.theme.colors.primary : p.theme.colors.primaryBg};
+  background: ${(p) => (p.$strong ? p.theme.colors.primary : p.theme.colors.primaryBg)};
   transition: opacity 0.15s;
 
-  &:hover { opacity: 0.7; }
+  &:hover {
+    opacity: 0.7;
+  }
 `;
 
 const ChartSub = styled.p`
@@ -682,41 +607,45 @@ interface Branch {
   sunatCode: string;
 }
 
-/* ── Form schema ─────────────────────────────────────── */
-
-const settingsSchema = z.object({
-  ruc:             z.string().regex(/^\d{11}$/, "El RUC debe tener exactamente 11 dígitos"),
-  razonSocial:     z.string().min(3, "Mínimo 3 caracteres"),
-  nombreComercial: z.string().optional(),
-  usuarioSol:      z.string().min(3, "Mínimo 3 caracteres"),
-  claveSol:        z.string().min(6, "Mínimo 6 caracteres"),
-});
-type SettingsFields = z.infer<typeof settingsSchema>;
-
-const ErrorMsg = styled.p`
-  margin: 0;
-  font-size: 1.2rem;
-  color: ${(p) => p.theme.colors.danger};
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-`;
-
 const ADMIN_OPTIONS = [
-  { icon: "group",           label: "Usuarios y Roles" },
+  { icon: "group", label: "Usuarios y Roles" },
   { icon: "account_balance", label: "Config. SUNAT" },
-  { icon: "business",        label: "Datos Empresa" },
-  { icon: "history_edu",     label: "Logs Sistema" },
+  { icon: "business", label: "Datos Empresa" },
+  { icon: "history_edu", label: "Logs Sistema" },
 ] as const;
 
 const USERS = [
-  { name: "Carlos Méndez", role: "Admin",    initials: "CM", bg: "rgba(113,42,226,0.10)", dot: "#712ae2" },
-  { name: "Ana Valdivia",  role: "Vendedor", initials: "AV", bg: "rgba(22,163,74,0.10)",  dot: "#16a34a" },
-  { name: "Jorge Ruiz",    role: "Contador", initials: "JR", bg: "rgba(180,83,9,0.10)",   dot: "#b45309" },
+  {
+    name: "Carlos Méndez",
+    role: "Admin",
+    initials: "CM",
+    bg: "rgba(113,42,226,0.10)",
+    dot: "#712ae2",
+  },
+  {
+    name: "Ana Valdivia",
+    role: "Vendedor",
+    initials: "AV",
+    bg: "rgba(22,163,74,0.10)",
+    dot: "#16a34a",
+  },
+  {
+    name: "Jorge Ruiz",
+    role: "Contador",
+    initials: "JR",
+    bg: "rgba(180,83,9,0.10)",
+    dot: "#b45309",
+  },
 ];
 
 const LOG_BARS: Array<{ h: number; strong?: boolean }> = [
-  { h: 40 }, { h: 60 }, { h: 30 }, { h: 90, strong: true }, { h: 50 }, { h: 70 }, { h: 40 },
+  { h: 40 },
+  { h: 60 },
+  { h: 30 },
+  { h: 90, strong: true },
+  { h: 50 },
+  { h: 70 },
+  { h: 40 },
 ];
 
 const BRANCHES: Branch[] = [
@@ -783,40 +712,100 @@ const branchColumns: ColumnDef<Branch>[] = [
   },
 ];
 
+/* ── Company form schema ─────────────────────────────── */
+
+const companySchema = z.object({
+  ruc: z
+    .string()
+    .min(1, "El RUC es requerido")
+    .regex(/^\d{11}$/, "El RUC debe tener 11 dígitos"),
+  razon_social: z.string().min(1, "La razón social es requerida"),
+  nombre_comercial: z.string().min(1, "El nombre comercial es requerido"),
+  direccion: z.string().min(1, "La dirección es requerida"),
+  ubigeo: z.string().min(1, "El ubigeo es requerido"),
+  distrito: z.string().min(1, "El distrito es requerido"),
+  provincia: z.string().min(1, "La provincia es requerida"),
+  departamento: z.string().min(1, "El departamento es requerido"),
+  telefono: z.string().min(1, "El teléfono es requerido"),
+  email: z.string().min(1, "El email es requerido").email("Ingresa un email válido"),
+  usuario_sol: z.string().min(1, "El usuario SOL es requerido"),
+  clave_sol: z.string().min(1, "La clave SOL es requerida"),
+});
+
+type CompanyFields = z.infer<typeof companySchema>;
+
+/* keystroke filters for the company form inputs */
+const NUM_REGEX = /^[0-9]+$/;
+const TEXT_REGEX = /^[a-zA-ZÁÉÍÓÚáéíóúÑñ0-9\s.,&#°/-]+$/;
+const PHONE_REGEX = /^[0-9+\s()-]+$/;
+const EMAIL_REGEX = /^[a-zA-Z0-9@._+-]+$/;
+const CRED_REGEX = /^[\s\S]*$/;
+
 /* ── Page ────────────────────────────────────────────── */
 
 export default function Settings() {
-  const [autoSend,     setAutoSend]     = useState(true);
+  const [autoSend, setAutoSend] = useState(true);
   const [thermalPrint, setThermalPrint] = useState(false);
-  const [emailNotify,  setEmailNotify]  = useState(true);
-  const [showPass,     setShowPass]     = useState(false);
+  const [emailNotify, setEmailNotify] = useState(true);
+  const [showPass, setShowPass] = useState(false);
+  const [productionMode, setProductionMode] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  const { token } = useApp();
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
     reset,
-  } = useForm<SettingsFields>({
-    resolver: zodResolver(settingsSchema),
+    formState: { errors },
+  } = useForm<CompanyFields>({
+    resolver: zodResolver(companySchema),
     defaultValues: {
-      ruc:             "20601234567",
-      razonSocial:     "PHARMACORE PERU S.A.C.",
-      nombreComercial: "PharmaCore",
-      usuarioSol:      "MODDATOS",
-      claveSol:        "password123",
+      ruc: "",
+      razon_social: "",
+      nombre_comercial: "",
+      direccion: "",
+      ubigeo: "",
+      distrito: "",
+      provincia: "",
+      departamento: "",
+      telefono: "",
+      email: "",
+      usuario_sol: "",
+      clave_sol: "",
     },
-  });
-
-  const onSave = handleSubmit(() => {
-    of(null).subscribe({
-      next: () => toast({ variant: "success", title: "Configuración guardada", description: "Los cambios han sido aplicados correctamente." }),
-    });
   });
 
   function handleDiscard() {
     reset();
+    setProductionMode(false);
     toast({ variant: "warning", title: "Cambios descartados" });
+  }
+
+  function onSubmit(data: CompanyFields) {
+    setLoading(true);
+    const tokenp = token || localStorage.getItem("token") || "";
+    console.log("token para API:", tokenp);
+    RestApi.securePost(tokenp, "/api/v1/companies", {
+      ...data,
+      modo_produccion: productionMode ? 1 : 0,
+    }).subscribe({
+      next: () => {
+        setLoading(false);
+        toast({
+          variant: "success",
+          title: "Configuración guardada",
+          description: "Los cambios han sido aplicados correctamente.",
+        });
+      },
+      error: (error: unknown) => {
+        setLoading(false);
+        const message =
+          error instanceof Error ? error.message : "Error al conectar con el servidor";
+        toast({ variant: "error", title: "Error al guardar", description: message });
+      },
+    });
   }
 
   return (
@@ -832,13 +821,22 @@ export default function Settings() {
           <PageHeading>
             <HeadingText>
               <PageTitle>Configuración de Empresa</PageTitle>
-              <PageSubtitle>Gestiona la identidad corporativa y credenciales fiscales de tu negocio.</PageSubtitle>
+              <PageSubtitle>
+                Gestiona la identidad corporativa y credenciales fiscales de tu negocio.
+              </PageSubtitle>
             </HeadingText>
             <HeadingActions>
-              <Button variant="outline" onClick={handleDiscard}>Descartar</Button>
-              <Button variant="primary" onClick={onSave}>
+              <Button type="button" variant="outline" onClick={handleDiscard} disabled={loading}>
+                Descartar
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={handleSubmit(onSubmit)}
+                disabled={loading}
+              >
                 <Icon name="save" size={18} />
-                Guardar Cambios
+                {loading ? "Guardando…" : "Guardar Cambios"}
               </Button>
             </HeadingActions>
           </PageHeading>
@@ -846,7 +844,6 @@ export default function Settings() {
 
         {/* Bento grid */}
         <BentoGrid variants={staggerContainer} initial="hidden" animate="visible">
-
           {/* Información General */}
           <ColSpan8 variants={fadeUp}>
             <Card>
@@ -858,38 +855,98 @@ export default function Settings() {
               </CardHeader>
 
               <FormGrid>
-                <FormGroup>
-                  <FormLabel htmlFor="ruc">RUC (Número de Identificación)</FormLabel>
-                  <MonoInput id="ruc" type="text" {...register("ruc")} />
-                  {errors.ruc && <ErrorMsg><Icon name="error" size={14} />{errors.ruc.message}</ErrorMsg>}
-                </FormGroup>
+                <InputCustom
+                  id="ruc"
+                  label="RUC (Número de Identificación)"
+                  regex={NUM_REGEX}
+                  maxLength={11}
+                  error={errors.ruc?.message}
+                  {...register("ruc")}
+                />
 
-                <FormGroup>
-                  <FormLabel htmlFor="razonSocial">Razón Social</FormLabel>
-                  <StyledInput id="razonSocial" type="text" {...register("razonSocial")} />
-                  {errors.razonSocial && <ErrorMsg><Icon name="error" size={14} />{errors.razonSocial.message}</ErrorMsg>}
-                </FormGroup>
+                <InputCustom
+                  id="razon_social"
+                  label="Razón Social"
+                  regex={TEXT_REGEX}
+                  error={errors.razon_social?.message}
+                  {...register("razon_social")}
+                />
 
                 <FormGroupFull>
-                  <FormLabel htmlFor="nombreComercial">Nombre Comercial</FormLabel>
-                  <StyledInput id="nombreComercial" type="text" {...register("nombreComercial")} />
+                  <InputCustom
+                    id="nombre_comercial"
+                    label="Nombre Comercial"
+                    regex={TEXT_REGEX}
+                    error={errors.nombre_comercial?.message}
+                    {...register("nombre_comercial")}
+                  />
                 </FormGroupFull>
 
                 <FormGroupFull>
-                  <FormLabel>Logo de la Empresa</FormLabel>
-                  <UploadZone>
-                    <Icon name="cloud_upload" size={36} />
-                    <UploadLabel>Click para subir o arrastra un archivo</UploadLabel>
-                    <UploadSub>PNG, JPG (Máx. 2MB)</UploadSub>
-                  </UploadZone>
+                  <InputCustom
+                    id="direccion"
+                    label="Dirección"
+                    regex={TEXT_REGEX}
+                    error={errors.direccion?.message}
+                    {...register("direccion")}
+                  />
                 </FormGroupFull>
+
+                <InputCustom
+                  id="ubigeo"
+                  label="Ubigeo"
+                  regex={NUM_REGEX}
+                  maxLength={6}
+                  error={errors.ubigeo?.message}
+                  {...register("ubigeo")}
+                />
+
+                <InputCustom
+                  id="distrito"
+                  label="Distrito"
+                  regex={TEXT_REGEX}
+                  error={errors.distrito?.message}
+                  {...register("distrito")}
+                />
+
+                <InputCustom
+                  id="provincia"
+                  label="Provincia"
+                  regex={TEXT_REGEX}
+                  error={errors.provincia?.message}
+                  {...register("provincia")}
+                />
+
+                <InputCustom
+                  id="departamento"
+                  label="Departamento"
+                  regex={TEXT_REGEX}
+                  error={errors.departamento?.message}
+                  {...register("departamento")}
+                />
+
+                <InputCustom
+                  id="telefono"
+                  label="Teléfono"
+                  regex={PHONE_REGEX}
+                  error={errors.telefono?.message}
+                  {...register("telefono")}
+                />
+
+                <InputCustom
+                  id="email"
+                  label="Email"
+                  type="email"
+                  regex={EMAIL_REGEX}
+                  error={errors.email?.message}
+                  {...register("email")}
+                />
               </FormGrid>
             </Card>
           </ColSpan8>
 
           {/* Right column */}
           <ColSpan4 variants={fadeUp}>
-
             {/* SUNAT Config */}
             <Card>
               <CardHeader>
@@ -910,34 +967,42 @@ export default function Settings() {
               </CertRow>
 
               <SunatFieldStack>
-                <FormGroup>
-                  <FormLabel htmlFor="usuarioSol">Usuario SOL</FormLabel>
-                  <SmallInput id="usuarioSol" type="text" {...register("usuarioSol")} />
-                  {errors.usuarioSol && <ErrorMsg><Icon name="error" size={14} />{errors.usuarioSol.message}</ErrorMsg>}
-                </FormGroup>
+                <InputCustom
+                  id="usuario_sol"
+                  label="Usuario SOL"
+                  regex={CRED_REGEX}
+                  error={errors.usuario_sol?.message}
+                  {...register("usuario_sol")}
+                />
 
-                <FormGroup>
-                  <FormLabel htmlFor="claveSol">Clave SOL</FormLabel>
-                  <PasswordWrap>
-                    <SmallInput
-                      id="claveSol"
-                      type={showPass ? "text" : "password"}
-                      style={{ paddingRight: "3.6rem" }}
-                      {...register("claveSol")}
+                <InputCustom
+                  id="clave_sol"
+                  label="Clave SOL"
+                  type={showPass ? "text" : "password"}
+                  regex={CRED_REGEX}
+                  icon={showPass ? "visibility_off" : "visibility"}
+                  error={errors.clave_sol?.message}
+                  {...register("clave_sol")}
+                />
+
+                <SectionLink type="button" onClick={() => setShowPass((v) => !v)}>
+                  {showPass ? "Ocultar clave SOL" : "Mostrar clave SOL"}
+                </SectionLink>
+
+                <ToggleRow>
+                  <ToggleLabel>Modo Producción</ToggleLabel>
+                  <SwitchLabel>
+                    <SwitchInput
+                      type="checkbox"
+                      checked={productionMode}
+                      onChange={() => setProductionMode((v) => !v)}
                     />
-                    <VisibilityBtn
-                      type="button"
-                      onClick={() => setShowPass((v) => !v)}
-                      title={showPass ? "Ocultar" : "Mostrar"}
-                    >
-                      <Icon name={showPass ? "visibility_off" : "visibility"} size={18} />
-                    </VisibilityBtn>
-                  </PasswordWrap>
-                  {errors.claveSol && <ErrorMsg><Icon name="error" size={14} />{errors.claveSol.message}</ErrorMsg>}
-                </FormGroup>
+                    <SwitchTrack $on={productionMode} />
+                  </SwitchLabel>
+                </ToggleRow>
               </SunatFieldStack>
 
-              <OutlineFullBtn>Actualizar Certificado</OutlineFullBtn>
+              <OutlineFullBtn type="button">Actualizar Certificado</OutlineFullBtn>
             </Card>
 
             {/* Preferences */}
@@ -953,7 +1018,11 @@ export default function Settings() {
                 <ToggleRow>
                   <ToggleLabel>Envío Automático SUNAT</ToggleLabel>
                   <SwitchLabel>
-                    <SwitchInput type="checkbox" checked={autoSend} onChange={() => setAutoSend((v) => !v)} />
+                    <SwitchInput
+                      type="checkbox"
+                      checked={autoSend}
+                      onChange={() => setAutoSend((v) => !v)}
+                    />
                     <SwitchTrack $on={autoSend} />
                   </SwitchLabel>
                 </ToggleRow>
@@ -961,7 +1030,11 @@ export default function Settings() {
                 <ToggleRow>
                   <ToggleLabel>Impresión Térmica (80mm)</ToggleLabel>
                   <SwitchLabel>
-                    <SwitchInput type="checkbox" checked={thermalPrint} onChange={() => setThermalPrint((v) => !v)} />
+                    <SwitchInput
+                      type="checkbox"
+                      checked={thermalPrint}
+                      onChange={() => setThermalPrint((v) => !v)}
+                    />
                     <SwitchTrack $on={thermalPrint} />
                   </SwitchLabel>
                 </ToggleRow>
@@ -969,7 +1042,11 @@ export default function Settings() {
                 <ToggleRow>
                   <ToggleLabel>Notificar por Email a Cliente</ToggleLabel>
                   <SwitchLabel>
-                    <SwitchInput type="checkbox" checked={emailNotify} onChange={() => setEmailNotify((v) => !v)} />
+                    <SwitchInput
+                      type="checkbox"
+                      checked={emailNotify}
+                      onChange={() => setEmailNotify((v) => !v)}
+                    />
                     <SwitchTrack $on={emailNotify} />
                   </SwitchLabel>
                 </ToggleRow>
@@ -1049,7 +1126,9 @@ export default function Settings() {
               <AdminGrid>
                 {ADMIN_OPTIONS.map((opt) => (
                   <AdminCard key={opt.label}>
-                    <AdminCardIcon><Icon name={opt.icon} size={26} /></AdminCardIcon>
+                    <AdminCardIcon>
+                      <Icon name={opt.icon} size={26} />
+                    </AdminCardIcon>
                     <AdminCardLabel>{opt.label}</AdminCardLabel>
                   </AdminCard>
                 ))}
@@ -1069,7 +1148,6 @@ export default function Settings() {
               </ChartCard>
             </Card>
           </ColSpan4>
-
         </BentoGrid>
       </ContentArea>
     </>

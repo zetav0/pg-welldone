@@ -57,7 +57,7 @@ interface InputCustomProps
 
 /* ── Styles (Tailwind) ──────────────────────────────── */
 
-const labelClasses = "text-[1rem] font-bold uppercase tracking-[0.1em] text-text-muted";
+const labelClasses = "text-[1rem] font-bold uppercase tracking-[0.1em]";
 
 const inputBase =
   "w-full box-border rounded-[0.8rem] bg-background text-[1.4rem] text-text font-medium " +
@@ -192,7 +192,12 @@ export const InputCustom = forwardRef<HTMLInputElement, InputCustomProps>(functi
   return (
     <div className="flex flex-col gap-[0.8rem]">
       {label && (
-        <label htmlFor={id} className={labelClasses}>
+        <label
+          htmlFor={id}
+          className={[labelClasses, error ? "text-danger" : "text-text-muted"]
+            .filter(Boolean)
+            .join(" ")}
+        >
           {label}
           {required && <span className="text-danger"> *</span>}
         </label>
@@ -200,7 +205,12 @@ export const InputCustom = forwardRef<HTMLInputElement, InputCustomProps>(functi
 
       <div className="relative">
         {icon && (
-          <span className="pointer-events-none absolute left-[1.2rem] top-1/2 -translate-y-1/2 flex items-center text-text-muted">
+          <span
+            className={[
+              "pointer-events-none absolute left-[1.2rem] top-1/2 -translate-y-1/2 flex items-center",
+              error ? "text-danger" : "text-text-muted",
+            ].join(" ")}
+          >
             <Icon name={icon} size={18} />
           </span>
         )}
