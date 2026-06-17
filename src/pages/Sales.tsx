@@ -2,7 +2,7 @@
 import styled from "styled-components";
 import { motion } from "framer-motion";
 import { staggerContainer, fadeUp } from "../lib/variants";
-import { PageShell } from "../components/layout/PageShell";
+
 import { Modal } from "../components/ui/Modal";
 import { Drawer } from "../components/common/Drawer";
 import { useToast } from "../components/common/Toast";
@@ -297,7 +297,7 @@ export default function Sales() {
   const { toast } = useToast();
 
   return (
-    <PageShell>
+    <>
       <ContentArea>
         <PageHeading>
           <div>
@@ -1594,6 +1594,6 @@ export default function Sales() {
           </Button>
         </Drawer.Footer>
       </Drawer>
-    </PageShell>
+    </>
   );
 }

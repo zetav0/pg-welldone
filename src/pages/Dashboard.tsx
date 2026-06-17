@@ -1,7 +1,7 @@
 ﻿import styled from "styled-components";
 import { motion } from "framer-motion";
 import { staggerContainer, fadeUp } from "../lib/variants";
-import { PageShell } from "../components/layout/PageShell";
+
 import { KpiCard } from "../components/dashboard/KpiCard";
 import { CounterCard } from "../components/dashboard/CounterCard";
 import { ExpirationsTable } from "../components/dashboard/ExpirationsTable";
@@ -221,7 +221,7 @@ const stockAlert = (
 
 export default function Dashboard() {
   return (
-    <PageShell>
+    <>
       <ContentArea>
         <PageHeading>
           <HeadingText>
@@ -291,6 +291,6 @@ export default function Dashboard() {
         </FooterLeft>
         <FooterVersion>PharmaCore v2.4.0-Stable • Client ID: DWTN-882</FooterVersion>
       </PageFooter>
-    </PageShell>
+    </>
   );
 }
