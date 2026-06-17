@@ -1,4 +1,8 @@
 import { useMemo, useState } from "react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { of } from "rxjs";
 import styled from "styled-components";
 import { motion } from "framer-motion";
 import { staggerContainer, fadeUp } from "../lib/variants";
@@ -591,6 +595,25 @@ const RECEIVABLES: Receivable[] = [
 
 const PAGE_SIZE = 8;
 
+/* ── Payment form schema ─────────────────────────────── */
+
+const paymentSchema = z.object({
+  monto:      z.string().refine((v) => parseFloat(v) > 0, "El monto debe ser mayor a 0"),
+  fecha:      z.string().min(1, "La fecha es requerida"),
+  metodo:     z.enum(["efectivo", "transferencia", "cheque", "deposito", "yape"]),
+  referencia: z.string().optional(),
+});
+type PaymentFields = z.infer<typeof paymentSchema>;
+
+const ErrorMsg = styled.p`
+  margin: 0;
+  font-size: 1.2rem;
+  color: ${(p) => p.theme.colors.danger};
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+`;
+
 function fmtSol(n: number): string {
   return `S/ ${n.toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
@@ -700,9 +723,17 @@ export default function Collections() {
   const [statusFilter, setStatusFilter]     = useState<ReceivableStatus | "all">("all");
   const [detailReceivable, setDetailReceivable] = useState<Receivable | null>(null);
   const [paymentTarget, setPaymentTarget]   = useState<Receivable | null>(null);
-  const [payAmount, setPayAmount]           = useState("");
-  const [payMethod, setPayMethod]           = useState("transferencia");
   const { toast } = useToast();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset: resetPayment,
+  } = useForm<PaymentFields>({
+    resolver: zodResolver(paymentSchema),
+    defaultValues: { monto: "", fecha: new Date().toISOString().slice(0, 10), metodo: "transferencia", referencia: "" },
+  });
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -730,19 +761,21 @@ export default function Collections() {
 
   function handleRegisterPayment(r: Receivable) {
     setPaymentTarget(r);
-    setPayAmount(r.amount.toFixed(2));
-    setPayMethod("transferencia");
+    resetPayment({ monto: r.amount.toFixed(2), fecha: new Date().toISOString().slice(0, 10), metodo: "transferencia", referencia: "" });
   }
 
-  function confirmPayment() {
+  const onPayment = handleSubmit((data) => {
     if (!paymentTarget) return;
+    const target = paymentTarget;
     setPaymentTarget(null);
-    toast({
-      variant: "success",
-      title: "Pago registrado",
-      description: `${paymentTarget.invoiceSerie} — ${fmtSol(Number(payAmount))} vía ${payMethod}.`,
+    of(null).subscribe({
+      next: () => toast({
+        variant: "success",
+        title: "Pago registrado",
+        description: `${target.invoiceSerie} — ${fmtSol(parseFloat(data.monto))} vía ${data.metodo}.`,
+      }),
     });
-  }
+  });
 
   const columns = buildColumns(handleRegisterPayment);
 
@@ -995,19 +1028,20 @@ export default function Collections() {
                 type="number"
                 min={0}
                 step={0.01}
-                value={payAmount}
-                onChange={(e) => setPayAmount(e.target.value)}
+                {...register("monto")}
               />
+              {errors.monto && <ErrorMsg><Icon name="error" size={14} />{errors.monto.message}</ErrorMsg>}
             </FieldGroup>
             <FieldGroup>
               <FieldLabel htmlFor="pay-date">Fecha de Pago</FieldLabel>
-              <FieldInput id="pay-date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} />
+              <FieldInput id="pay-date" type="date" {...register("fecha")} />
+              {errors.fecha && <ErrorMsg><Icon name="error" size={14} />{errors.fecha.message}</ErrorMsg>}
             </FieldGroup>
           </Grid2>
 
           <FieldGroup>
             <FieldLabel htmlFor="pay-method">Método de Pago</FieldLabel>
-            <FieldSelect id="pay-method" value={payMethod} onChange={(e) => setPayMethod(e.target.value)}>
+            <FieldSelect id="pay-method" {...register("metodo")}>
               <option value="efectivo">Efectivo</option>
               <option value="transferencia">Transferencia bancaria</option>
               <option value="cheque">Cheque</option>
@@ -1018,13 +1052,13 @@ export default function Collections() {
 
           <FieldGroup>
             <FieldLabel htmlFor="pay-ref">Referencia / Nº Operación (opcional)</FieldLabel>
-            <FieldInput id="pay-ref" type="text" placeholder="Ej. Nº de transferencia, nº cheque..." />
+            <FieldInput id="pay-ref" type="text" placeholder="Ej. Nº de transferencia, nº cheque..." {...register("referencia")} />
           </FieldGroup>
         </ModalBody>
 
         <Modal.Footer>
           <Button variant="outline" onClick={() => setPaymentTarget(null)}>Cancelar</Button>
-          <Button variant="primary" onClick={confirmPayment}>
+          <Button variant="primary" onClick={onPayment}>
             <Icon name="check_circle" size={16} />
             Confirmar Pago
           </Button>

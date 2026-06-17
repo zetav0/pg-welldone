@@ -1,4 +1,8 @@
 import { useMemo, useState } from "react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { of } from "rxjs";
 import styled from "styled-components";
 import { motion } from "framer-motion";
 import { staggerContainer, fadeUp } from "../../lib/variants";
@@ -466,6 +470,22 @@ const ReasonPill = styled.span`
   font-weight: 700;
 `;
 
+/* ── Form schema ─────────────────────────────────────── */
+
+const debitNoteSchema = z.object({
+  motivo: z.string().min(1, "Selecciona un motivo"),
+});
+type DebitNoteFields = z.infer<typeof debitNoteSchema>;
+
+const ErrorMsg = styled.p`
+  margin: 0;
+  font-size: 1.2rem;
+  color: ${(p) => p.theme.colors.danger};
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+`;
+
 /* ── Data ────────────────────────────────────────────── */
 
 type NoteStatus = "accepted" | "pending";
@@ -605,6 +625,16 @@ export default function DebitNotes() {
   const [noteItems, setNoteItems]         = useState<LineItem[]>([]);
   const { toast } = useToast();
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset: resetNote,
+  } = useForm<DebitNoteFields>({
+    resolver: zodResolver(debitNoteSchema),
+    defaultValues: { motivo: "intereses" },
+  });
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return DEBIT_NOTES.filter((r) => {
@@ -619,11 +649,20 @@ export default function DebitNotes() {
 
   const columns = buildColumns();
 
-  function handleEmit() {
-    setDrawerOpen(false);
-    setNoteItems([]);
-    toast({ variant: "success", title: "Nota de débito emitida", description: "Enviada a SUNAT exitosamente." });
-  }
+  const onEmit = handleSubmit(() => {
+    if (noteItems.length === 0) {
+      toast({ variant: "error", title: "Sin ítems", description: "Agrega al menos un cargo o ítem afectado." });
+      return;
+    }
+    of(null).subscribe({
+      next: () => {
+        setDrawerOpen(false);
+        setNoteItems([]);
+        resetNote({ motivo: "intereses" });
+        toast({ variant: "success", title: "Nota de débito emitida", description: "Enviada a SUNAT exitosamente." });
+      },
+    });
+  });
 
   return (
     <ContentArea>
@@ -737,12 +776,13 @@ export default function DebitNotes() {
             </FieldGroup>
             <FieldGroup>
               <FieldLabel>Motivo de la Nota de Débito</FieldLabel>
-              <FieldSelect defaultValue="intereses">
+              <FieldSelect {...register("motivo")}>
                 <option value="intereses">01 — Intereses por mora</option>
                 <option value="cargo_adicional">02 — Aumento en el valor</option>
                 <option value="diferencia_precio">03 — Penalidades / otras penalidades</option>
                 <option value="otros">11 — Ajustes de operaciones de exportación</option>
               </FieldSelect>
+              {errors.motivo && <ErrorMsg><Icon name="error" size={14} />{errors.motivo.message}</ErrorMsg>}
             </FieldGroup>
           </FormSection>
 
@@ -767,7 +807,7 @@ export default function DebitNotes() {
         <Drawer.Footer>
           <DrawerFooterRow>
             <OutlineBtn type="button" onClick={() => setDrawerOpen(false)}>Cancelar</OutlineBtn>
-            <PrimaryBtn type="button" onClick={handleEmit}>
+            <PrimaryBtn type="button" onClick={onEmit}>
               <Icon name="add_circle" size={18} />
               Emitir Nota de Débito
             </PrimaryBtn>
