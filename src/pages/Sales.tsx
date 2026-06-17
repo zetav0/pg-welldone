@@ -10,6 +10,10 @@ import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { Tooltip } from "../components/ui/Tooltip";
 import { Pagination } from "../components/ui/Pagination";
+import { Table } from "../components/ui/Table";
+import type { ColumnDef } from "../components/ui/Table";
+import { products } from "../data/inventory";
+import type { Product } from "../data/inventory";
 import { Icon } from "../components/ui/Icon";
 import { Loader } from "../components/ui/Loader";
 import { Skeleton } from "../components/ui/Skeleton";
@@ -236,6 +240,10 @@ export default function Sales() {
   const [loadingDemo, setLoadingDemo] = useState(true);
   const [dismissedAlert, setDismissedAlert] = useState(false);
   const [removedTags, setRemovedTags] = useState<string[]>([]);
+  const [tableSelected, setTableSelected] = useState<Set<string | number>>(new Set());
+  const [tableSortKey, setTableSortKey] = useState<string>("name");
+  const [tableSortDir, setTableSortDir] = useState<"asc" | "desc">("asc");
+  const [tableLoading, setTableLoading] = useState(false);
   const [pg1, setPg1] = useState(5);
   const [pg2, setPg2] = useState(47);
   const [pg3, setPg3] = useState(3);
@@ -796,6 +804,164 @@ export default function Sales() {
               </Row>
 
             </SectionCard>
+          </Section>
+
+          {/* Table */}
+          <Section variants={fadeUp}>
+            <SectionTitle>Table</SectionTitle>
+
+            {(() => {
+              const COLS: ColumnDef<Product>[] = [
+                {
+                  key: "name",
+                  header: "Producto",
+                  sortable: true,
+                  minWidth: "16rem",
+                },
+                {
+                  key: "sku",
+                  header: "SKU",
+                  width: "10rem",
+                  render: (r) => (
+                    <span style={{ fontFamily: "monospace", fontSize: "1.1rem", color: "#64748b" }}>
+                      {r.sku}
+                    </span>
+                  ),
+                },
+                {
+                  key: "category",
+                  header: "Categoría",
+                  sortable: true,
+                  minWidth: "14rem",
+                },
+                {
+                  key: "stock",
+                  header: "Stock",
+                  sortable: true,
+                  align: "center",
+                  width: "8rem",
+                },
+                {
+                  key: "expiry",
+                  header: "Vencimiento",
+                  sortable: true,
+                  width: "13rem",
+                },
+                {
+                  key: "status",
+                  header: "Estado",
+                  align: "center",
+                  width: "10rem",
+                  render: (r) => (
+                    <Badge
+                      variant={
+                        r.status === "healthy" ? "success"
+                        : r.status === "warning" ? "warning"
+                        : "danger"
+                      }
+                      dot
+                      pill
+                    >
+                      {r.status === "healthy" ? "OK"
+                        : r.status === "warning" ? "Bajo"
+                        : "Crítico"}
+                    </Badge>
+                  ),
+                },
+              ];
+
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: "2.4rem" }}>
+
+                  {/* Default — sortable + selectable */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                    <Label>Default — sortable + selectable</Label>
+                    <Table
+                      columns={COLS}
+                      data={products}
+                      keyField="id"
+                      sortKey={tableSortKey}
+                      sortDir={tableSortDir}
+                      onSort={(k, d) => { setTableSortKey(k); setTableSortDir(d); }}
+                      selectable
+                      selectedKeys={tableSelected}
+                      onSelectionChange={setTableSelected}
+                    />
+                    {tableSelected.size > 0 && (
+                      <span style={{ fontSize: "1.2rem", color: "#64748b" }}>
+                        {tableSelected.size} fila(s) seleccionada(s)
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Striped */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                    <Label>Striped</Label>
+                    <Table columns={COLS} data={products} keyField="id" variant="striped" />
+                  </div>
+
+                  {/* Bordered + compact */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                    <Label>Bordered + compact</Label>
+                    <Table
+                      columns={COLS}
+                      data={products}
+                      keyField="id"
+                      variant="bordered"
+                      density="compact"
+                    />
+                  </div>
+
+                  {/* Loading skeleton */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                    <Label>
+                      Loading &nbsp;
+                      <Badge
+                        appearance="outline"
+                        variant="primary"
+                        size="sm"
+                        onClick={() => setTableLoading((v) => !v)}
+                      >
+                        {tableLoading ? "Mostrar datos" : "Simular carga"}
+                      </Badge>
+                    </Label>
+                    <Table
+                      columns={COLS}
+                      data={products}
+                      keyField="id"
+                      loading={tableLoading}
+                      skeletonRows={4}
+                    />
+                  </div>
+
+                  {/* Empty state */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                    <Label>Estado vacío</Label>
+                    <Table
+                      columns={COLS}
+                      data={[]}
+                      keyField="id"
+                      emptyMessage="No se encontraron productos"
+                      emptyIcon="search_off"
+                    />
+                  </div>
+
+                  {/* Sticky header + max height */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                    <Label>Sticky header + maxHeight</Label>
+                    <Table
+                      columns={COLS}
+                      data={products}
+                      keyField="id"
+                      stickyHeader
+                      maxHeight="17rem"
+                      density="comfortable"
+                    />
+                  </div>
+
+                </div>
+              );
+            })()}
           </Section>
 
           {/* Cards */}
