@@ -637,15 +637,17 @@ function buildColumns(
 /* ── Form schema ─────────────────────────────────────── */
 
 const customerSchema = z.object({
-  tipo_documento:   z.enum(["1", "6"]),
-  numero_documento: z.string(),
-  razon_social:     z.string().min(3, "Mínimo 3 caracteres"),
-  email:            z.string().email("Correo electrónico inválido"),
-  telefono:         z.string().optional().or(z.literal("")),
-  direccion:        z.string().min(5, "Dirección requerida"),
-  departamento:     z.string().min(2, "Selecciona un departamento"),
-  provincia:        z.string().min(2, "Selecciona una provincia"),
-  distrito:         z.string().min(2, "Selecciona un distrito"),
+  tipo_documento:    z.enum(["1", "6"]),
+  numero_documento:  z.string(),
+  razon_social:      z.string().min(3, "Mínimo 3 caracteres"),
+  nombre_comercial:  z.string().optional().or(z.literal("")),
+  email:             z.string().email("Correo electrónico inválido"),
+  telefono:          z.string().optional().or(z.literal("")),
+  direccion:         z.string().min(5, "Dirección requerida"),
+  ubigeo:            z.string().regex(/^\d{6}$/, "Código ubigeo de 6 dígitos (ej. 150101)"),
+  departamento:      z.string().min(2, "Selecciona un departamento"),
+  provincia:         z.string().min(2, "Selecciona una provincia"),
+  distrito:          z.string().min(2, "Selecciona un distrito"),
 }).superRefine((d, ctx) => {
   if (d.tipo_documento === "6") {
     if (!/^\d{11}$/.test(d.numero_documento))
@@ -659,8 +661,8 @@ const customerSchema = z.object({
 type CustomerFields = z.infer<typeof customerSchema>;
 
 const BLANK_CUSTOMER: CustomerFields = {
-  tipo_documento: "6", numero_documento: "", razon_social: "", email: "",
-  telefono: "", direccion: "", departamento: "", provincia: "", distrito: "",
+  tipo_documento: "6", numero_documento: "", razon_social: "", nombre_comercial: "",
+  email: "", telefono: "", direccion: "", ubigeo: "", departamento: "", provincia: "", distrito: "",
 };
 
 /* ── Component ───────────────────────────────────────── */
@@ -752,9 +754,11 @@ export default function Customers() {
       tipo_documento:   c.type === "empresa" ? "6" : "1",
       numero_documento: c.rucDni,
       razon_social:     c.name,
+      nombre_comercial: "",
       email:            c.email,
       telefono:         c.phone ?? "",
       direccion:        c.address,
+      ubigeo:           "",
       departamento:     "",
       provincia:        "",
       distrito:         "",
@@ -991,6 +995,18 @@ export default function Customers() {
             {errors.razon_social && <ErrorMsg><Icon name="error" size={14} />{errors.razon_social.message}</ErrorMsg>}
           </FormGroup>
 
+          {/* Nombre Comercial — solo empresa */}
+          {currentTipoDoc === "6" && (
+            <FormGroup>
+              <FormLabel>Nombre Comercial <span style={{ fontWeight: 400, opacity: 0.6 }}>(opcional)</span></FormLabel>
+              <FormInput
+                type="text"
+                placeholder="Ej. Cliente Corp"
+                {...register("nombre_comercial")}
+              />
+            </FormGroup>
+          )}
+
           {/* Email + Teléfono */}
           <FormRow>
             <FormGroup>
@@ -1012,16 +1028,29 @@ export default function Customers() {
             </FormGroup>
           </FormRow>
 
-          {/* Dirección */}
-          <FormGroup>
-            <FormLabel>Dirección fiscal</FormLabel>
-            <FormInput
-              type="text"
-              placeholder="Av. Ejemplo 123"
-              {...register("direccion")}
-            />
-            {errors.direccion && <ErrorMsg><Icon name="error" size={14} />{errors.direccion.message}</ErrorMsg>}
-          </FormGroup>
+          {/* Dirección + Ubigeo */}
+          <FormRow>
+            <FormGroup style={{ flex: 2 }}>
+              <FormLabel>Dirección fiscal</FormLabel>
+              <FormInput
+                type="text"
+                placeholder="Av. Ejemplo 123"
+                {...register("direccion")}
+              />
+              {errors.direccion && <ErrorMsg><Icon name="error" size={14} />{errors.direccion.message}</ErrorMsg>}
+            </FormGroup>
+            <FormGroup style={{ flex: 1 }}>
+              <FormLabel>Ubigeo</FormLabel>
+              <FormInput
+                type="text"
+                maxLength={6}
+                placeholder="150101"
+                {...register("ubigeo")}
+                onChange={(e) => setValue("ubigeo", e.target.value.replace(/\D/g, ""), { shouldValidate: true })}
+              />
+              {errors.ubigeo && <ErrorMsg><Icon name="error" size={14} />{errors.ubigeo.message}</ErrorMsg>}
+            </FormGroup>
+          </FormRow>
 
           {/* Ubicación: Departamento → Provincia → Distrito */}
           <FormGroup>
