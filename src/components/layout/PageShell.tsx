@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Sidebar } from "./Sidebar";
 import { TopHeader } from "./TopHeader";
 import { useIsMobile } from "../../lib/useMediaQuery";
-import { clearLocalStorage } from "../../utilities/local-storage-manager";
+import { useApp } from "../../context/AppContext";
 
 const Layout = styled.div`
   display: flex;
@@ -35,6 +35,7 @@ export function PageShell({ children }: PageShellProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
+  const { logout } = useApp();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // The drawer is only open while on mobile; navigation closes it via Sidebar's onClose.
@@ -53,7 +54,7 @@ export function PageShell({ children }: PageShellProps) {
   return (
     <Layout>
       <Sidebar
-        onLogout={() => { clearLocalStorage(); navigate("/login"); }}
+        onLogout={() => { logout(); navigate("/login"); }}
         isMobile={isMobile}
         mobileOpen={drawerOpen}
         onClose={() => setMobileNavOpen(false)}

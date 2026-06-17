@@ -1,6 +1,7 @@
 export const LocalStorageKeys = {
     REFRESH_TOKEN: "refreshToken",
     TOKEN: "token",
+    USER: "user",
 } as const;
 
 export type LocalStorageKeys = typeof LocalStorageKeys[keyof typeof LocalStorageKeys];

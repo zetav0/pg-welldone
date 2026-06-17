@@ -5,28 +5,17 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState } from "react";
-import { useApp } from "../context/AppContext";
+import { useApp, type AuthUser } from "../context/AppContext";
 import { Icon } from "../components/ui/Icon";
 import { FormInput } from "../components/ui/FormInput";
 import { useToast } from "../components/common/Toast";
 import { RestApi } from "../services/restApi";
-import { saveInLocalStorage, LocalStorageKeys } from "../utilities/local-storage-manager";
-
 
 /* ── API types ───────────────────────────────────────── */
 
-interface LoginUser {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  company_id: number | null;
-  permissions: string[];
-}
-
 interface LoginResponse {
   message: string;
-  user: LoginUser;
+  user: AuthUser;
   access_token: string;
   token_type: string;
 }
@@ -183,7 +172,7 @@ const PageFooter = styled.p`
 
 export default function Login() {
   const navigate = useNavigate();
-  const { count } = useApp();
+  const { count, login } = useApp();
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
@@ -209,9 +198,7 @@ export default function Login() {
       abilities:  ["*"],
     }).subscribe({
       next: (response) => {
-        if (response?.access_token) {
-          saveInLocalStorage(LocalStorageKeys.TOKEN, response.access_token);
-        }
+        login(response.user, response.access_token);
         navigate("/dashboard");
       },
       error: (error: unknown) => {
