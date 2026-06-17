@@ -182,14 +182,11 @@ const BodyTr = styled.tr<{
       }
     `}
 
-  ${(p) =>
-    p.$clickable &&
-    css`
-      cursor: pointer;
-      &:hover {
-        background: ${p.theme.colors.chipBg};
-      }
-    `}
+  &:hover {
+    background: ${(p) => p.theme.colors.chipBg};
+  }
+
+  ${(p) => p.$clickable && css`cursor: pointer;`}
 
   &:last-child {
     border-bottom: none;
