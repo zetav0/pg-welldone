@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import styled from "styled-components";
 import { motion } from "framer-motion";
-import { useForm } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { staggerContainer, fadeUp } from "../lib/variants";
+import { ComboboxCustom } from "../components/common/Combobox";
+import type { ComboboxOption } from "../components/common/Combobox";
+import { getDepartamentos, getProvincias, getDistritos } from "../data/ubigeo";
 
 import { Table } from "../components/ui/Table";
 import type { ColumnDef } from "../components/ui/Table";
@@ -758,6 +761,8 @@ export default function Settings() {
     register,
     handleSubmit,
     reset,
+    control,
+    setValue,
     formState: { errors },
   } = useForm<CompanyFields>({
     resolver: zodResolver(companySchema),
@@ -776,6 +781,20 @@ export default function Settings() {
       clave_sol: "",
     },
   });
+
+  // Cascading location selects: provincia depends on departamento, distrito on provincia.
+  const departamento = useWatch({ control, name: "departamento" });
+  const provincia = useWatch({ control, name: "provincia" });
+
+  const toOptions = (names: string[]): ComboboxOption[] =>
+    names.map((n) => ({ id: n, title: n }));
+
+  const departamentoOptions = useMemo(() => toOptions(getDepartamentos()), []);
+  const provinciaOptions = useMemo(() => toOptions(getProvincias(departamento)), [departamento]);
+  const distritoOptions = useMemo(
+    () => toOptions(getDistritos(departamento, provincia)),
+    [departamento, provincia]
+  );
 
   function handleDiscard() {
     reset();
@@ -901,28 +920,74 @@ export default function Settings() {
                   {...register("ubigeo")}
                 />
 
-                <InputCustom
-                  id="distrito"
-                  label="Distrito"
-                  regex={TEXT_REGEX}
-                  error={errors.distrito?.message}
-                  {...register("distrito")}
+                <Controller
+                  control={control}
+                  name="departamento"
+                  render={({ field }) => (
+                    <ComboboxCustom
+                      ref={field.ref}
+                      id="departamento"
+                      label="Departamento"
+                      placeholder="Seleccione un departamento"
+                      searchPlaceholder="Buscar departamento…"
+                      options={departamentoOptions}
+                      value={field.value}
+                      onBlur={field.onBlur}
+                      onChange={(val) => {
+                        field.onChange(val);
+                        setValue("provincia", "", { shouldValidate: false });
+                        setValue("distrito", "", { shouldValidate: false });
+                      }}
+                      error={errors.departamento?.message}
+                    />
+                  )}
                 />
 
-                <InputCustom
-                  id="provincia"
-                  label="Provincia"
-                  regex={TEXT_REGEX}
-                  error={errors.provincia?.message}
-                  {...register("provincia")}
+                <Controller
+                  control={control}
+                  name="provincia"
+                  render={({ field }) => (
+                    <ComboboxCustom
+                      ref={field.ref}
+                      id="provincia"
+                      label="Provincia"
+                      placeholder={
+                        departamento ? "Seleccione una provincia" : "Seleccione un departamento"
+                      }
+                      searchPlaceholder="Buscar provincia…"
+                      options={provinciaOptions}
+                      value={field.value}
+                      disabled={!departamento}
+                      onBlur={field.onBlur}
+                      onChange={(val) => {
+                        field.onChange(val);
+                        setValue("distrito", "", { shouldValidate: false });
+                      }}
+                      error={errors.provincia?.message}
+                    />
+                  )}
                 />
 
-                <InputCustom
-                  id="departamento"
-                  label="Departamento"
-                  regex={TEXT_REGEX}
-                  error={errors.departamento?.message}
-                  {...register("departamento")}
+                <Controller
+                  control={control}
+                  name="distrito"
+                  render={({ field }) => (
+                    <ComboboxCustom
+                      ref={field.ref}
+                      id="distrito"
+                      label="Distrito"
+                      placeholder={
+                        provincia ? "Seleccione un distrito" : "Seleccione una provincia"
+                      }
+                      searchPlaceholder="Buscar distrito…"
+                      options={distritoOptions}
+                      value={field.value}
+                      disabled={!provincia}
+                      onBlur={field.onBlur}
+                      onChange={field.onChange}
+                      error={errors.distrito?.message}
+                    />
+                  )}
                 />
 
                 <InputCustom
