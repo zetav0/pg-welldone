@@ -1,4 +1,8 @@
 import { useState, useMemo } from "react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { of } from "rxjs";
 import styled from "styled-components";
 import { motion } from "framer-motion";
 import { staggerContainer, fadeUp } from "../lib/variants";
@@ -532,6 +536,15 @@ const DebtCard = styled.div<{ $hasDebt: boolean }>`
   justify-content: space-between;
 `;
 
+const ErrorMsg = styled.p`
+  margin: 0;
+  font-size: 1.2rem;
+  color: ${(p) => p.theme.colors.danger};
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+`;
+
 const DebtAmount = styled.span<{ $hasDebt: boolean }>`
   font-size: 2rem;
   font-weight: 900;
@@ -632,16 +645,30 @@ function buildColumns(
   ];
 }
 
-/* ── Blank form state ────────────────────────────────── */
+/* ── Form schema ─────────────────────────────────────── */
 
-const BLANK_FORM = {
-  type:      "empresa" as ClientType,
-  rucDni:    "",
-  name:      "",
-  email:     "",
-  phone:     "",
-  address:   "",
-  segment:   "nuevo" as ClientSegment,
+const customerSchema = z.object({
+  type:    z.enum(["empresa", "persona"]),
+  rucDni:  z.string(),
+  name:    z.string().min(3, "Mínimo 3 caracteres"),
+  email:   z.string().email("Correo electrónico inválido"),
+  phone:   z.string().optional().or(z.literal("")),
+  address: z.string().min(5, "Dirección requerida"),
+  segment: z.enum(["vip", "recurrente", "nuevo"]),
+}).superRefine((d, ctx) => {
+  if (d.type === "empresa") {
+    if (!/^\d{11}$/.test(d.rucDni))
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["rucDni"], message: "RUC debe tener exactamente 11 dígitos" });
+  } else {
+    if (!/^\d{8}$/.test(d.rucDni))
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["rucDni"], message: "DNI debe tener exactamente 8 dígitos" });
+  }
+});
+
+type CustomerFields = z.infer<typeof customerSchema>;
+
+const BLANK_CUSTOMER: CustomerFields = {
+  type: "empresa", rucDni: "", name: "", email: "", phone: "", address: "", segment: "nuevo",
 };
 
 /* ── Component ───────────────────────────────────────── */
@@ -663,7 +690,17 @@ export default function Customers() {
   /* ── Drawer ── */
   const [drawerMode,  setDrawerMode]  = useState<DrawerMode>("none");
   const [activeClient, setActiveClient] = useState<Client | null>(null);
-  const [form, setForm] = useState({ ...BLANK_FORM });
+
+  /* ── Form (New / Edit) ── */
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    setValue,
+    reset,
+  } = useForm<CustomerFields>({ resolver: zodResolver(customerSchema), defaultValues: { ...BLANK_CUSTOMER } });
+  const currentType = watch("type");
 
   /* ── Derived data ── */
   const filtered = useMemo(() => {
@@ -682,7 +719,7 @@ export default function Customers() {
 
   /* ── Handlers ── */
   function openNew() {
-    setForm({ ...BLANK_FORM });
+    reset({ ...BLANK_CUSTOMER });
     setDrawerMode("new");
   }
 
@@ -693,32 +730,25 @@ export default function Customers() {
 
   function openEdit(c: Client) {
     setActiveClient(c);
-    setForm({
-      type:    c.type,
-      rucDni:  c.rucDni,
-      name:    c.name,
-      email:   c.email,
-      phone:   c.phone,
-      address: c.address,
-      segment: c.segment,
-    });
+    reset({ type: c.type, rucDni: c.rucDni, name: c.name, email: c.email, phone: c.phone ?? "", address: c.address, segment: c.segment });
     setDrawerMode("edit");
   }
 
   function closeDrawer() {
     setDrawerMode("none");
     setActiveClient(null);
+    reset({ ...BLANK_CUSTOMER });
   }
 
-  function handleSave() {
-    if (!form.rucDni || !form.name || !form.email) {
-      toast({ variant: "error", title: "Campos requeridos", description: "Completa RUC/DNI, nombre y correo." });
-      return;
-    }
-    const action = drawerMode === "new" ? "registrado" : "actualizado";
-    toast({ variant: "success", title: `Cliente ${action}`, description: form.name });
-    closeDrawer();
-  }
+  const onSave = handleSubmit((data) => {
+    of(null).subscribe({
+      next: () => {
+        const action = drawerMode === "new" ? "registrado" : "actualizado";
+        toast({ variant: "success", title: `Cliente ${action}`, description: data.name });
+        closeDrawer();
+      },
+    });
+  });
 
   function handleExport() {
     toast({ variant: "info", title: "Exportando…", description: "El archivo Excel estará listo en unos segundos." });
@@ -867,13 +897,13 @@ export default function Customers() {
             <FormLabel>Tipo de cliente</FormLabel>
             <TypeToggle>
               {(["empresa", "persona"] as ClientType[]).map((t) => (
-                <TypeOption key={t} $active={form.type === t}>
+                <TypeOption key={t} $active={currentType === t}>
                   <input
                     type="radio"
                     name="type"
                     value={t}
-                    checked={form.type === t}
-                    onChange={() => setForm((f) => ({ ...f, type: t, rucDni: "" }))}
+                    checked={currentType === t}
+                    onChange={() => { setValue("type", t, { shouldValidate: true }); setValue("rucDni", ""); }}
                   />
                   <Icon name={t === "empresa" ? "corporate_fare" : "person"} size={16} />
                   {t === "empresa" ? "Empresa" : "Persona Natural"}
@@ -882,21 +912,22 @@ export default function Customers() {
             </TypeToggle>
           </FormGroup>
 
-          {/* RUC / DNI + Nombre */}
+          {/* RUC / DNI + Segmento */}
           <FormRow>
             <FormGroup>
-              <FormLabel>{form.type === "empresa" ? "RUC (11 dígitos)" : "DNI (8 dígitos)"}</FormLabel>
+              <FormLabel>{currentType === "empresa" ? "RUC (11 dígitos)" : "DNI (8 dígitos)"}</FormLabel>
               <FormInput
                 type="text"
-                maxLength={form.type === "empresa" ? 11 : 8}
-                placeholder={form.type === "empresa" ? "20XXXXXXXXX" : "XXXXXXXX"}
-                value={form.rucDni}
-                onChange={(e) => setForm((f) => ({ ...f, rucDni: e.target.value.replace(/\D/g, "") }))}
+                maxLength={currentType === "empresa" ? 11 : 8}
+                placeholder={currentType === "empresa" ? "20XXXXXXXXX" : "XXXXXXXX"}
+                {...register("rucDni")}
+                onChange={(e) => setValue("rucDni", e.target.value.replace(/\D/g, ""), { shouldValidate: true })}
               />
+              {errors.rucDni && <ErrorMsg><Icon name="error" size={14} />{errors.rucDni.message}</ErrorMsg>}
             </FormGroup>
             <FormGroup>
               <FormLabel>Segmento</FormLabel>
-              <FormSelect value={form.segment} onChange={(e) => setForm((f) => ({ ...f, segment: e.target.value as ClientSegment }))}>
+              <FormSelect {...register("segment")}>
                 <option value="nuevo">Nuevo</option>
                 <option value="recurrente">Recurrente</option>
                 <option value="vip">VIP</option>
@@ -906,13 +937,13 @@ export default function Customers() {
 
           {/* Razón Social */}
           <FormGroup>
-            <FormLabel>{form.type === "empresa" ? "Razón Social" : "Nombre Completo"}</FormLabel>
+            <FormLabel>{currentType === "empresa" ? "Razón Social" : "Nombre Completo"}</FormLabel>
             <FormInput
               type="text"
-              placeholder={form.type === "empresa" ? "Ej. Empresa S.A.C." : "Ej. Juan Pérez García"}
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              placeholder={currentType === "empresa" ? "Ej. Empresa S.A.C." : "Ej. Juan Pérez García"}
+              {...register("name")}
             />
+            {errors.name && <ErrorMsg><Icon name="error" size={14} />{errors.name.message}</ErrorMsg>}
           </FormGroup>
 
           {/* Email + Teléfono */}
@@ -922,17 +953,16 @@ export default function Customers() {
               <FormInput
                 type="email"
                 placeholder="correo@empresa.com"
-                value={form.email}
-                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                {...register("email")}
               />
+              {errors.email && <ErrorMsg><Icon name="error" size={14} />{errors.email.message}</ErrorMsg>}
             </FormGroup>
             <FormGroup>
               <FormLabel>Teléfono</FormLabel>
               <FormInput
                 type="tel"
                 placeholder="01-XXXXXXX"
-                value={form.phone}
-                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                {...register("phone")}
               />
             </FormGroup>
           </FormRow>
@@ -943,15 +973,15 @@ export default function Customers() {
             <FormInput
               type="text"
               placeholder="Av. Ejemplo 123, Distrito, Ciudad"
-              value={form.address}
-              onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+              {...register("address")}
             />
+            {errors.address && <ErrorMsg><Icon name="error" size={14} />{errors.address.message}</ErrorMsg>}
           </FormGroup>
         </DrawerForm>
 
         <Drawer.Footer>
           <Button variant="ghost" onClick={closeDrawer}>Cancelar</Button>
-          <Button variant="primary" onClick={handleSave}>
+          <Button variant="primary" onClick={onSave}>
             <Icon name={drawerMode === "new" ? "person_add" : "save"} size={16} />
             {drawerMode === "new" ? "Registrar Cliente" : "Guardar Cambios"}
           </Button>

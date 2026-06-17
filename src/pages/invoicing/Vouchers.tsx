@@ -1,4 +1,9 @@
 import { useMemo, useState } from "react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { of } from "rxjs";
+import { delay } from "rxjs/operators";
 import styled from "styled-components";
 import { motion } from "framer-motion";
 import { staggerContainer, fadeUp } from "../../lib/variants";
@@ -604,6 +609,35 @@ const ReasonInput = styled.textarea`
   &:focus { border-color: ${(p) => p.theme.colors.danger}; }
 `;
 
+/* ── Form schemas ────────────────────────────────────── */
+
+const voucherSchema = z.object({
+  tipo:          z.enum(["factura", "boleta"]),
+  documento:     z.string(),
+  moneda:        z.enum(["PEN", "USD"]),
+  condicionPago: z.enum(["contado", "credito15", "credito30"]),
+}).superRefine((d, ctx) => {
+  if (d.tipo === "factura" && !/^\d{11}$/.test(d.documento))
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["documento"], message: "RUC debe tener exactamente 11 dígitos" });
+  if (d.tipo === "boleta" && d.documento !== "" && !/^\d{8}$/.test(d.documento))
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["documento"], message: "DNI debe tener exactamente 8 dígitos" });
+});
+type VoucherFormFields = z.infer<typeof voucherSchema>;
+
+const anularSchema = z.object({
+  motivo: z.string().min(10, "El motivo debe tener al menos 10 caracteres"),
+});
+type AnularFields = z.infer<typeof anularSchema>;
+
+const ErrorMsg = styled.p`
+  margin: 0;
+  font-size: 1.2rem;
+  color: ${(p) => p.theme.colors.danger};
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+`;
+
 /* ── Data ────────────────────────────────────────────── */
 
 type VoucherType   = "factura" | "boleta";
@@ -745,10 +779,35 @@ export default function Vouchers() {
   const [drawerOpen, setDrawerOpen]       = useState(false);
   const [detailVoucher, setDetailVoucher] = useState<Voucher | null>(null);
   const [anularTarget, setAnularTarget]   = useState<Voucher | null>(null);
-  const [voucherType, setVoucherType]     = useState<VoucherType>("factura");
   const [voucherItems, setVoucherItems]   = useState<LineItem[]>([]);
-  const [anularReason, setAnularReason]   = useState("");
+  const [docSearching, setDocSearching]   = useState(false);
+  const [razonSocial, setRazonSocial]     = useState("");
   const { toast } = useToast();
+
+  /* ── Nuevo Comprobante form ── */
+  const {
+    register: regVoucher,
+    handleSubmit: submitVoucher,
+    formState: { errors: vErrors },
+    watch: watchV,
+    setValue: setV,
+    reset: resetVoucher,
+  } = useForm<VoucherFormFields>({
+    resolver: zodResolver(voucherSchema),
+    defaultValues: { tipo: "factura", documento: "", moneda: "PEN", condicionPago: "contado" },
+  });
+  const currentTipo = watchV("tipo");
+
+  /* ── Anular form ── */
+  const {
+    register: regAnular,
+    handleSubmit: submitAnular,
+    formState: { errors: aErrors },
+    reset: resetAnular,
+  } = useForm<AnularFields>({
+    resolver: zodResolver(anularSchema),
+    defaultValues: { motivo: "" },
+  });
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -767,25 +826,48 @@ export default function Vouchers() {
   function applyType(v: VoucherType | "all") { setTypeFilter(v); setPage(1); }
   function applyStatus(v: VoucherStatus | "all") { setStatusFilter(v); setPage(1); }
 
-  function handleAnular(v: Voucher) {
-    setAnularTarget(v);
-    setAnularReason("");
-  }
-
-  function confirmAnular() {
-    if (!anularTarget) return;
-    setAnularTarget(null);
-    toast({
-      variant: "warning",
-      title: "Comprobante anulado",
-      description: `${anularTarget.serie} — la baja ha sido comunicada a SUNAT.`,
+  function handleSearchDoc(doc: string) {
+    if (!doc) return;
+    setDocSearching(true);
+    setRazonSocial("");
+    of({ name: currentTipo === "factura" ? "Empresa Demo S.A.C." : "Juan Demo García" }).pipe(delay(600)).subscribe({
+      next: (r) => { setRazonSocial(r.name); setDocSearching(false); },
     });
   }
 
-  function handleEmit() {
-    setDrawerOpen(false);
-    toast({ variant: "success", title: "Comprobante emitido", description: "Enviado a SUNAT exitosamente." });
+  function handleAnular(v: Voucher) {
+    setAnularTarget(v);
+    resetAnular({ motivo: "" });
   }
+
+  const onAnular = submitAnular((data) => {
+    if (!anularTarget) return;
+    const target = anularTarget;
+    setAnularTarget(null);
+    of(null).subscribe({
+      next: () => toast({
+        variant: "warning",
+        title: "Comprobante anulado",
+        description: `${target.serie} — la baja ha sido comunicada a SUNAT. Motivo: ${data.motivo}`,
+      }),
+    });
+  });
+
+  const onEmit = submitVoucher(() => {
+    if (voucherItems.length === 0) {
+      toast({ variant: "error", title: "Sin productos", description: "Agrega al menos un ítem al comprobante." });
+      return;
+    }
+    of(null).subscribe({
+      next: () => {
+        setDrawerOpen(false);
+        resetVoucher();
+        setVoucherItems([]);
+        setRazonSocial("");
+        toast({ variant: "success", title: "Comprobante emitido", description: "Enviado a SUNAT exitosamente." });
+      },
+    });
+  });
 
   const columns = buildColumns(handleAnular);
 
@@ -907,27 +989,40 @@ export default function Vouchers() {
           <FormSection>
             <SectionTitle>Tipo de Comprobante</SectionTitle>
             <TypeToggle>
-              <TypeBtn $active={voucherType === "factura"} onClick={() => setVoucherType("factura")}>
+              <TypeBtn $active={currentTipo === "factura"} onClick={() => { setV("tipo", "factura", { shouldValidate: true }); setV("documento", ""); setRazonSocial(""); }}>
                 Factura Electrónica
               </TypeBtn>
-              <TypeBtn $active={voucherType === "boleta"} onClick={() => setVoucherType("boleta")}>
+              <TypeBtn $active={currentTipo === "boleta"} onClick={() => { setV("tipo", "boleta", { shouldValidate: true }); setV("documento", ""); setRazonSocial(""); }}>
                 Boleta de Venta
               </TypeBtn>
             </TypeToggle>
           </FormSection>
 
           <FormSection>
-            <SectionTitle>Datos del {voucherType === "factura" ? "Cliente (RUC)" : "Comprador"}</SectionTitle>
+            <SectionTitle>Datos del {currentTipo === "factura" ? "Cliente (RUC)" : "Comprador"}</SectionTitle>
             <FieldGroup>
-              <FieldLabel>{voucherType === "factura" ? "RUC" : "DNI (opcional)"}</FieldLabel>
+              <FieldLabel>{currentTipo === "factura" ? "RUC" : "DNI (opcional)"}</FieldLabel>
               <RucRow>
-                <FieldInput type="text" placeholder={voucherType === "factura" ? "20xxxxxxxxx" : "DNI o dejar vacío"} style={{ flex: 1 }} />
-                <SearchDocBtn type="button">Buscar</SearchDocBtn>
+                <FieldInput
+                  type="text"
+                  placeholder={currentTipo === "factura" ? "20xxxxxxxxx" : "DNI o dejar vacío"}
+                  style={{ flex: 1 }}
+                  {...regVoucher("documento")}
+                  onChange={(e) => setV("documento", e.target.value.replace(/\D/g, ""), { shouldValidate: true })}
+                />
+                <SearchDocBtn
+                  type="button"
+                  disabled={docSearching}
+                  onClick={() => handleSearchDoc((document.querySelector<HTMLInputElement>('[name="documento"]'))?.value ?? "")}
+                >
+                  {docSearching ? "Buscando…" : "Buscar"}
+                </SearchDocBtn>
               </RucRow>
+              {vErrors.documento && <ErrorMsg><Icon name="error" size={14} />{vErrors.documento.message}</ErrorMsg>}
             </FieldGroup>
             <FieldGroup>
               <FieldLabel>Razón Social / Nombre</FieldLabel>
-              <FieldInput type="text" placeholder="Se autocompletará" readOnly />
+              <FieldInput type="text" value={razonSocial} placeholder="Se autocompletará" readOnly />
             </FieldGroup>
           </FormSection>
 
@@ -941,14 +1036,14 @@ export default function Vouchers() {
             <FieldGrid2>
               <FieldGroup>
                 <FieldLabel>Moneda</FieldLabel>
-                <FieldSelect defaultValue="PEN">
+                <FieldSelect {...regVoucher("moneda")}>
                   <option value="PEN">Soles (PEN)</option>
                   <option value="USD">Dólares (USD)</option>
                 </FieldSelect>
               </FieldGroup>
               <FieldGroup>
                 <FieldLabel>Condición de Pago</FieldLabel>
-                <FieldSelect defaultValue="contado">
+                <FieldSelect {...regVoucher("condicionPago")}>
                   <option value="contado">Al contado</option>
                   <option value="credito15">Crédito 15 días</option>
                   <option value="credito30">Crédito 30 días</option>
@@ -961,7 +1056,7 @@ export default function Vouchers() {
         <Drawer.Footer>
           <DrawerFooterRow>
             <OutlineBtn type="button" onClick={() => setDrawerOpen(false)}>Cancelar</OutlineBtn>
-            <PrimaryBtn type="button" onClick={handleEmit}>
+            <PrimaryBtn type="button" onClick={onEmit}>
               <Icon name="receipt_long" size={18} />
               Emitir Comprobante
             </PrimaryBtn>
@@ -1083,16 +1178,16 @@ export default function Vouchers() {
             <ReasonInput
               id="anular-reason"
               placeholder="Ej. Error en datos del cliente, duplicado, etc."
-              value={anularReason}
-              onChange={(e) => setAnularReason(e.target.value)}
+              {...regAnular("motivo")}
             />
+            {aErrors.motivo && <ErrorMsg style={{ marginTop: "0.6rem" }}><Icon name="error" size={14} />{aErrors.motivo.message}</ErrorMsg>}
           </div>
         </ConfirmBody>
         <Modal.Footer>
           <Button variant="outline" onClick={() => setAnularTarget(null)}>Cancelar</Button>
           <Button
             variant="primary"
-            onClick={confirmAnular}
+            onClick={onAnular}
             style={{ background: "var(--color-danger)", borderColor: "var(--color-danger)" }}
           >
             <Icon name="cancel" size={16} />

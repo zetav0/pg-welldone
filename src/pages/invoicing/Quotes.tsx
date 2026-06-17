@@ -1,4 +1,9 @@
 import { useMemo, useState } from "react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { of } from "rxjs";
+import { delay } from "rxjs/operators";
 import styled from "styled-components";
 import { motion } from "framer-motion";
 import { staggerContainer, fadeUp } from "../../lib/variants";
@@ -629,6 +634,25 @@ const RecordSub = styled.span`
   color: ${(p) => p.theme.colors.textMuted};
 `;
 
+/* ── Form schema ─────────────────────────────────────── */
+
+const quoteSchema = z.object({
+  ruc:           z.string().regex(/^\d{8}(\d{3})?$/, "Ingresa un RUC (11 díg.) o DNI (8 díg.)"),
+  validez:       z.enum(["7", "15", "30"]),
+  moneda:        z.enum(["PEN", "USD"]),
+  observaciones: z.string().optional(),
+});
+type QuoteFields = z.infer<typeof quoteSchema>;
+
+const ErrorMsg = styled.p`
+  margin: 0;
+  font-size: 1.2rem;
+  color: ${(p) => p.theme.colors.danger};
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+`;
+
 /* ── Data ────────────────────────────────────────────── */
 
 type QuoteStatus = "sent" | "accepted" | "expired" | "draft";
@@ -759,7 +783,28 @@ export default function Quotes() {
   const [quoteItems, setQuoteItems]         = useState<LineItem[]>([]);
   const [detailQuote, setDetailQuote]       = useState<Quote | null>(null);
   const [facturarTarget, setFacturarTarget] = useState<Quote | null>(null);
+  const [rucSearching, setRucSearching]     = useState(false);
+  const [razonSocial, setRazonSocial]       = useState("");
   const { toast } = useToast();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset: resetQuote,
+  } = useForm<QuoteFields>({
+    resolver: zodResolver(quoteSchema),
+    defaultValues: { ruc: "", validez: "15", moneda: "PEN", observaciones: "" },
+  });
+
+  function handleSearchRuc(rucVal: string) {
+    if (!rucVal) return;
+    setRucSearching(true);
+    setRazonSocial("");
+    of({ name: "Empresa Demo S.A.C." }).pipe(delay(600)).subscribe({
+      next: (r) => { setRazonSocial(r.name); setRucSearching(false); },
+    });
+  }
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -792,13 +837,27 @@ export default function Quotes() {
 
   const columns = buildColumns(handleFacturar);
 
-  function handleSend() {
-    setDrawerOpen(false);
-    toast({ variant: "success", title: "Cotización enviada", description: "El cliente recibirá la proforma por correo electrónico." });
-  }
+  const onSend = handleSubmit(() => {
+    if (quoteItems.length === 0) {
+      toast({ variant: "error", title: "Sin productos", description: "Agrega al menos un producto a la cotización." });
+      return;
+    }
+    of(null).subscribe({
+      next: () => {
+        setDrawerOpen(false);
+        resetQuote();
+        setQuoteItems([]);
+        setRazonSocial("");
+        toast({ variant: "success", title: "Cotización enviada", description: "El cliente recibirá la proforma por correo electrónico." });
+      },
+    });
+  });
 
   function handleDraft() {
     setDrawerOpen(false);
+    resetQuote();
+    setQuoteItems([]);
+    setRazonSocial("");
     toast({ variant: "info", title: "Borrador guardado" });
   }
 
@@ -954,15 +1013,28 @@ export default function Quotes() {
             <FieldGroup>
               <FieldLabel>RUC o DNI</FieldLabel>
               <RucRow>
-                <FieldInput type="text" placeholder="Ej. 20601234567" style={{ flex: 1 }} />
-                <SearchBtn type="button">Buscar</SearchBtn>
+                <FieldInput
+                  type="text"
+                  placeholder="Ej. 20601234567"
+                  style={{ flex: 1 }}
+                  {...register("ruc")}
+                />
+                <SearchBtn
+                  type="button"
+                  disabled={rucSearching}
+                  onClick={() => handleSearchRuc((document.querySelector<HTMLInputElement>('[name="ruc"]'))?.value ?? "")}
+                >
+                  {rucSearching ? "Buscando…" : "Buscar"}
+                </SearchBtn>
               </RucRow>
+              {errors.ruc && <ErrorMsg><Icon name="error" size={14} />{errors.ruc.message}</ErrorMsg>}
             </FieldGroup>
 
             <FieldGroup>
               <FieldLabel>Razón Social</FieldLabel>
               <FieldInput
                 type="text"
+                value={razonSocial}
                 placeholder="Se autocompletará al buscar RUC"
                 readOnly
               />
@@ -986,7 +1058,7 @@ export default function Quotes() {
             <FieldGrid2>
               <FieldGroup>
                 <FieldLabel>Validez (Días)</FieldLabel>
-                <FieldSelect defaultValue="15">
+                <FieldSelect {...register("validez")}>
                   <option value="7">7 días</option>
                   <option value="15">15 días</option>
                   <option value="30">30 días</option>
@@ -995,7 +1067,7 @@ export default function Quotes() {
 
               <FieldGroup>
                 <FieldLabel>Moneda</FieldLabel>
-                <FieldSelect defaultValue="PEN">
+                <FieldSelect {...register("moneda")}>
                   <option value="PEN">Soles (PEN)</option>
                   <option value="USD">Dólares (USD)</option>
                 </FieldSelect>
@@ -1004,7 +1076,7 @@ export default function Quotes() {
 
             <FieldGroup>
               <FieldLabel>Observaciones</FieldLabel>
-              <FieldInput as="textarea" placeholder="Condiciones comerciales, notas..." style={{ minHeight: "7rem", resize: "vertical" }} />
+              <FieldInput as="textarea" placeholder="Condiciones comerciales, notas..." style={{ minHeight: "7rem", resize: "vertical" }} {...register("observaciones")} />
             </FieldGroup>
           </Step>
         </DrawerBody>
@@ -1012,7 +1084,7 @@ export default function Quotes() {
         <Drawer.Footer>
           <DrawerFooterRow>
             <DraftBtn type="button" onClick={handleDraft}>Guardar Borrador</DraftBtn>
-            <SendBtn type="button" onClick={handleSend}>
+            <SendBtn type="button" onClick={onSend}>
               <Icon name="send" size={18} />
               Generar y Enviar
             </SendBtn>

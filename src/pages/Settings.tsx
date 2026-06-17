@@ -1,4 +1,8 @@
 import { useState } from "react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { of } from "rxjs";
 import styled from "styled-components";
 import { motion } from "framer-motion";
 import { staggerContainer, fadeUp } from "../lib/variants";
@@ -678,6 +682,26 @@ interface Branch {
   sunatCode: string;
 }
 
+/* ── Form schema ─────────────────────────────────────── */
+
+const settingsSchema = z.object({
+  ruc:             z.string().regex(/^\d{11}$/, "El RUC debe tener exactamente 11 dígitos"),
+  razonSocial:     z.string().min(3, "Mínimo 3 caracteres"),
+  nombreComercial: z.string().optional(),
+  usuarioSol:      z.string().min(3, "Mínimo 3 caracteres"),
+  claveSol:        z.string().min(6, "Mínimo 6 caracteres"),
+});
+type SettingsFields = z.infer<typeof settingsSchema>;
+
+const ErrorMsg = styled.p`
+  margin: 0;
+  font-size: 1.2rem;
+  color: ${(p) => p.theme.colors.danger};
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+`;
+
 const ADMIN_OPTIONS = [
   { icon: "group",           label: "Usuarios y Roles" },
   { icon: "account_balance", label: "Config. SUNAT" },
@@ -768,11 +792,30 @@ export default function Settings() {
   const [showPass,     setShowPass]     = useState(false);
   const { toast } = useToast();
 
-  function handleSave() {
-    toast({ variant: "success", title: "Configuración guardada", description: "Los cambios han sido aplicados correctamente." });
-  }
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<SettingsFields>({
+    resolver: zodResolver(settingsSchema),
+    defaultValues: {
+      ruc:             "20601234567",
+      razonSocial:     "PHARMACORE PERU S.A.C.",
+      nombreComercial: "PharmaCore",
+      usuarioSol:      "MODDATOS",
+      claveSol:        "password123",
+    },
+  });
+
+  const onSave = handleSubmit(() => {
+    of(null).subscribe({
+      next: () => toast({ variant: "success", title: "Configuración guardada", description: "Los cambios han sido aplicados correctamente." }),
+    });
+  });
 
   function handleDiscard() {
+    reset();
     toast({ variant: "warning", title: "Cambios descartados" });
   }
 
@@ -793,7 +836,7 @@ export default function Settings() {
             </HeadingText>
             <HeadingActions>
               <Button variant="outline" onClick={handleDiscard}>Descartar</Button>
-              <Button variant="primary" onClick={handleSave}>
+              <Button variant="primary" onClick={onSave}>
                 <Icon name="save" size={18} />
                 Guardar Cambios
               </Button>
@@ -816,18 +859,20 @@ export default function Settings() {
 
               <FormGrid>
                 <FormGroup>
-                  <FormLabel>RUC (Número de Identificación)</FormLabel>
-                  <MonoInput type="text" defaultValue="20601234567" />
+                  <FormLabel htmlFor="ruc">RUC (Número de Identificación)</FormLabel>
+                  <MonoInput id="ruc" type="text" {...register("ruc")} />
+                  {errors.ruc && <ErrorMsg><Icon name="error" size={14} />{errors.ruc.message}</ErrorMsg>}
                 </FormGroup>
 
                 <FormGroup>
-                  <FormLabel>Razón Social</FormLabel>
-                  <StyledInput type="text" defaultValue="PHARMACORE PERU S.A.C." />
+                  <FormLabel htmlFor="razonSocial">Razón Social</FormLabel>
+                  <StyledInput id="razonSocial" type="text" {...register("razonSocial")} />
+                  {errors.razonSocial && <ErrorMsg><Icon name="error" size={14} />{errors.razonSocial.message}</ErrorMsg>}
                 </FormGroup>
 
                 <FormGroupFull>
-                  <FormLabel>Nombre Comercial</FormLabel>
-                  <StyledInput type="text" defaultValue="PharmaCore" />
+                  <FormLabel htmlFor="nombreComercial">Nombre Comercial</FormLabel>
+                  <StyledInput id="nombreComercial" type="text" {...register("nombreComercial")} />
                 </FormGroupFull>
 
                 <FormGroupFull>
@@ -866,17 +911,19 @@ export default function Settings() {
 
               <SunatFieldStack>
                 <FormGroup>
-                  <FormLabel>Usuario SOL</FormLabel>
-                  <SmallInput type="text" defaultValue="MODDATOS" />
+                  <FormLabel htmlFor="usuarioSol">Usuario SOL</FormLabel>
+                  <SmallInput id="usuarioSol" type="text" {...register("usuarioSol")} />
+                  {errors.usuarioSol && <ErrorMsg><Icon name="error" size={14} />{errors.usuarioSol.message}</ErrorMsg>}
                 </FormGroup>
 
                 <FormGroup>
-                  <FormLabel>Clave SOL</FormLabel>
+                  <FormLabel htmlFor="claveSol">Clave SOL</FormLabel>
                   <PasswordWrap>
                     <SmallInput
+                      id="claveSol"
                       type={showPass ? "text" : "password"}
-                      defaultValue="password123"
                       style={{ paddingRight: "3.6rem" }}
+                      {...register("claveSol")}
                     />
                     <VisibilityBtn
                       type="button"
@@ -886,6 +933,7 @@ export default function Settings() {
                       <Icon name={showPass ? "visibility_off" : "visibility"} size={18} />
                     </VisibilityBtn>
                   </PasswordWrap>
+                  {errors.claveSol && <ErrorMsg><Icon name="error" size={14} />{errors.claveSol.message}</ErrorMsg>}
                 </FormGroup>
               </SunatFieldStack>
 
