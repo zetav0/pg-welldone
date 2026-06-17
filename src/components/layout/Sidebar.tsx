@@ -9,6 +9,13 @@ import { InputCustom } from "../common/Input";
 import { SelectCustom } from "../common/Select";
 import { CheckboxCustom } from "../common/Checkbox";
 import { RadioGroupCustom } from "../common/Radio";
+import { useApp } from "../../context/AppContext";
+
+function getInitials(name: string): string {
+  const words = name.trim().split(/\s+/);
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+}
 
 /* ── Styled components ──────────────────────────────── */
 
@@ -191,6 +198,57 @@ const ToggleButton = styled.button`
 const Footer = styled.div`
   padding: 1.2rem;
   border-top: 1px solid ${(p) => p.theme.colors.border};
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+`;
+
+const UserCard = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: ${(p) => p.theme.colors.primaryBg};
+  min-width: 0;
+`;
+
+const UserAvatar = styled.div`
+  width: 3.4rem;
+  height: 3.4rem;
+  border-radius: 50%;
+  background: ${(p) => p.theme.colors.primary};
+  color: ${(p) => p.theme.colors.white};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  flex-shrink: 0;
+`;
+
+const UserCardInfo = styled.div`
+  min-width: 0;
+  flex: 1;
+`;
+
+const UserCardName = styled.p`
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: ${(p) => p.theme.colors.text};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const UserCardRole = styled.p`
+  margin: 0.2rem 0 0;
+  font-size: 1rem;
+  color: ${(p) => p.theme.colors.primary};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const LogoutIconButton = styled.button`
@@ -228,6 +286,10 @@ export function Sidebar({ onLogout, isMobile = false, mobileOpen = false, onClos
   const [collapsed, setCollapsed] = useState(() => window.innerWidth < 1024);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useApp();
+  const displayName = user?.name ?? "Usuario";
+  const displayRole = user?.role ?? "";
+  const initials = getInitials(displayName);
 
   const isActive = (path: string) => path !== "#" && location.pathname.startsWith(path);
 
@@ -328,6 +390,15 @@ export function Sidebar({ onLogout, isMobile = false, mobileOpen = false, onClos
         )}
 
       <Footer>
+        {!isCollapsed && (
+          <UserCard>
+            <UserAvatar>{initials}</UserAvatar>
+            <UserCardInfo>
+              <UserCardName>{displayName}</UserCardName>
+              <UserCardRole>{displayRole}</UserCardRole>
+            </UserCardInfo>
+          </UserCard>
+        )}
         <InputCustom
           label="Buscar producto"
           icon="inventory_2"

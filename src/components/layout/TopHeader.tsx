@@ -1,5 +1,12 @@
 import styled from "styled-components";
 import { Icon } from "../ui/Icon";
+import { useApp } from "../../context/AppContext";
+
+function getInitials(name: string): string {
+  const words = name.trim().split(/\s+/);
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+}
 
 /* ── Styled components ──────────────────────────────── */
 
@@ -179,6 +186,11 @@ interface TopHeaderProps {
 }
 
 export function TopHeader({ onMenuClick, showMenuButton }: TopHeaderProps) {
+  const { user } = useApp();
+  const displayName = user?.name ?? "Usuario";
+  const displayRole = user?.role ?? "";
+  const initials = getInitials(displayName);
+
   return (
     <Root>
       {showMenuButton && (
@@ -208,10 +220,10 @@ export function TopHeader({ onMenuClick, showMenuButton }: TopHeaderProps) {
 
         <UserArea>
           <UserInfo>
-            <UserName>Dr. Sarah Chen</UserName>
-            <UserRole>Lead Pharmacist</UserRole>
+            <UserName>{displayName}</UserName>
+            <UserRole>{displayRole}</UserRole>
           </UserInfo>
-          <Avatar>SC</Avatar>
+          <Avatar>{initials}</Avatar>
         </UserArea>
       </RightSection>
     </Root>
