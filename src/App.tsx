@@ -7,6 +7,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory";
 import Sales from "./pages/Sales";
+import Settings from "./pages/Settings";
 
 const router = createBrowserRouter([
   { path: "/", element: <Navigate to="/login" replace /> },
@@ -14,6 +15,7 @@ const router = createBrowserRouter([
   { path: "/dashboard", element: <Dashboard /> },
   { path: "/inventory", element: <Inventory /> },
   { path: "/sales", element: <Sales /> },
+  { path: "/settings", element: <Settings /> },
 ]);
 
 export default function App() {
