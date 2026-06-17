@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+﻿import React, { forwardRef } from "react";
 import { Icon } from "../ui/Icon";
 
 /* ── Single radio ───────────────────────────────────── */
@@ -38,7 +38,7 @@ export const RadioCustom = forwardRef<HTMLInputElement, RadioCustomProps>(functi
             boxBorder,
             "transition-[border-color,box-shadow] duration-150",
             "checked:border-primary",
-            "focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_rgba(0,108,117,0.12)]",
+            "focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_rgba(113, 42, 226, 0.12)]",
             disabled ? "cursor-not-allowed" : "cursor-pointer",
             className,
           ]

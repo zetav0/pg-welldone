@@ -53,7 +53,7 @@ const LogoIcon = styled.div`
   align-items: center;
   justify-content: center;
   color: ${(p) => p.theme.colors.white};
-  box-shadow: 0 10px 15px -3px rgba(0, 108, 117, 0.3);
+  box-shadow: 0 10px 15px -3px ${(p) => p.theme.colors.primaryBgStrong};
 `;
 
 const AppName = styled.p`
@@ -79,7 +79,7 @@ const Card = styled.div`
   border-radius: 2rem;
   border: 1px solid ${(p) => p.theme.colors.border};
   padding: 3.2rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.1), 0 2px 8px -2px rgba(0, 0, 0, 0.06);
 `;
 
 const CardTitle = styled.h2`
@@ -134,7 +134,7 @@ const SubmitButton = styled.button`
   font-size: 1.4rem;
   cursor: pointer;
   font-family: inherit;
-  box-shadow: 0 10px 15px -3px rgba(0, 108, 117, 0.3);
+  box-shadow: 0 4px 14px -2px ${(p) => p.theme.colors.primaryBgStrong};
   transition:
     background 0.15s,
     opacity 0.15s;
@@ -145,14 +145,14 @@ const SubmitButton = styled.button`
   }
 
   &:not(:disabled):hover {
-    background: rgba(0, 108, 117, 0.9);
+    opacity: 0.88;
   }
 `;
 
 const PageFooter = styled.p`
   text-align: center;
   font-size: 1.2rem;
-  color: ${(p) => p.theme.colors.borderStrong};
+  color: ${(p) => p.theme.colors.textSubtle};
   margin: 2.4rem 0 0;
 `;
 

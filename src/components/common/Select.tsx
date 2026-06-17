@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+﻿import React, { forwardRef } from "react";
 import { Icon } from "../ui/Icon";
 
 export interface OpcionDesplegable {
@@ -61,7 +61,7 @@ export const SelectCustom = forwardRef<HTMLSelectElement, SelectCustomProps>(fun
 
   const borderClass = error
     ? "border border-danger focus:border-danger focus:shadow-[0_0_0_3px_rgba(239,68,68,0.12)]"
-    : "border border-border-strong focus:border-primary focus:shadow-[0_0_0_3px_rgba(0,108,117,0.10)]";
+    : "border border-border-strong focus:border-primary focus:shadow-[0_0_0_3px_rgba(113, 42, 226, 0.10)]";
 
   const textClass = currentValue ? "text-text" : "text-text-muted";
 

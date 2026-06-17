@@ -1,4 +1,4 @@
-import styled, { css } from "styled-components";
+﻿import styled, { css } from "styled-components";
 import { Icon } from "./Icon";
 
 /* ── Types ──────────────────────────────────────────────── */
@@ -71,7 +71,7 @@ const PageBtn = styled.button<{ $active: boolean; $size: PaginationSize }>`
           background: ${p.theme.colors.primary};
           border-color: ${p.theme.colors.primary};
           color: ${p.theme.colors.white};
-          box-shadow: 0 2px 8px rgba(0, 108, 117, 0.4);
+          box-shadow: 0 2px 8px rgba(113, 42, 226, 0.4);
         `
       : css`
           background: transparent;

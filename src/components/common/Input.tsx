@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { forwardRef, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "../ui/Icon";
 
 const DEFAULT_REGEX = /^[a-zA-ZÁÉÍÓÚáéíóúÑñ0-9\s]+$/;
@@ -171,7 +171,7 @@ export const InputCustom = forwardRef<HTMLInputElement, InputCustomProps>(functi
 
   const borderClass = error
     ? "border border-danger focus:border-danger focus:shadow-[0_0_0_3px_rgba(239,68,68,0.12)]"
-    : "border border-border-strong focus:border-primary focus:shadow-[0_0_0_3px_rgba(0,108,117,0.10)]";
+    : "border border-border-strong focus:border-primary focus:shadow-[0_0_0_3px_rgba(113, 42, 226, 0.10)]";
 
   const ActionButton = hasAction ? (
     <button

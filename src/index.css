@@ -7,16 +7,16 @@
   GlobalStyle (src/theme.ts).
 */
 @theme {
-  --color-primary: #006c75;
-  --color-background: #0f172a;
-  --color-surface: #1e293b;
-  --color-danger: #ef4444;
-  --color-success: #22c55e;
-  --color-warning: #eab308;
-  --color-text: #f1f5f9;
-  --color-text-muted: #64748b;
-  --color-text-subtle: #94a3b8;
-  --color-border: #1e293b;
-  --color-border-strong: #334155;
-  --color-chip: #1e293b;
+  --color-primary: #712ae2;
+  --color-background: #f7f9fb;
+  --color-surface: #ffffff;
+  --color-danger: #ba1a1a;
+  --color-success: #16a34a;
+  --color-warning: #b45309;
+  --color-text: #191c1e;
+  --color-text-muted: #45464d;
+  --color-text-subtle: #76777d;
+  --color-border: #e8eaec;
+  --color-border-strong: #c6c6cd;
+  --color-chip: #eceef0;
 }

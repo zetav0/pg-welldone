@@ -6,7 +6,7 @@ import { Icon } from "../ui/Icon";
 const Root = styled.header`
   height: 6.4rem;
   border-bottom: 1px solid ${(p) => p.theme.colors.border};
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(247, 249, 251, 0.85);
   backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
