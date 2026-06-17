@@ -43,6 +43,7 @@ interface AppContextValue {
   isAuthenticated: boolean;
   login: (user: AuthUser, token: string) => void;
   logout: () => void;
+  updateUser: (updates: Partial<AuthUser>) => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -67,6 +68,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }
 
+  function updateUser(updates: Partial<AuthUser>) {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...updates };
+      saveInLocalStorage(LocalStorageKeys.USER, JSON.stringify(updated));
+      return updated;
+    });
+  }
+
   return (
     <AppContext.Provider
       value={{
@@ -79,6 +89,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!token,
         login,
         logout,
+        updateUser,
       }}
     >
       {children}

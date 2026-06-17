@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { ajax } from "rxjs/ajax";
 import styled from "styled-components";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
@@ -712,6 +713,24 @@ const branchColumns: ColumnDef<Branch>[] = [
   },
 ];
 
+/* ── API types ───────────────────────────────────────── */
+
+interface CompanyData {
+  id: number;
+  ruc: string;
+  razon_social: string;
+  nombre_comercial?: string;
+  direccion: string;
+  ubigeo: string;
+  distrito: string;
+  provincia: string;
+  departamento: string;
+  telefono?: string;
+  email: string;
+  usuario_sol: string;
+  modo_produccion: number;
+}
+
 /* ── Company form schema ─────────────────────────────── */
 
 const companySchema = z.object({
@@ -750,9 +769,11 @@ export default function Settings() {
   const [showPass, setShowPass] = useState(false);
   const [productionMode, setProductionMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+  const [existingCompanyId, setExistingCompanyId] = useState<number | null>(null);
   const { toast } = useToast();
 
-  const { token } = useApp();
+  const { token, updateUser } = useApp();
 
   const {
     register,
@@ -777,6 +798,43 @@ export default function Settings() {
     },
   });
 
+  useEffect(() => {
+    if (!token) { setFetching(false); return; }
+    const baseUrl = import.meta.env.VITE_BACKOFFICE_BASE_URL as string;
+    const sub = ajax
+      .getJSON<{ success: boolean; data: CompanyData[] }>(`${baseUrl}/api/v1/companies`, {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      })
+      .subscribe({
+        next: (res) => {
+          if (res.data && res.data.length > 0) {
+            const c = res.data[0];
+            setExistingCompanyId(c.id);
+            setProductionMode(c.modo_produccion === 1);
+            reset({
+              ruc: c.ruc,
+              razon_social: c.razon_social,
+              nombre_comercial: c.nombre_comercial ?? "",
+              direccion: c.direccion,
+              ubigeo: c.ubigeo,
+              distrito: c.distrito,
+              provincia: c.provincia,
+              departamento: c.departamento,
+              telefono: c.telefono ?? "",
+              email: c.email,
+              usuario_sol: c.usuario_sol,
+              clave_sol: "",
+            });
+            updateUser({ company_id: c.id });
+          }
+          setFetching(false);
+        },
+        error: () => setFetching(false),
+      });
+    return () => sub.unsubscribe();
+  }, [token]);
+
   function handleDiscard() {
     reset();
     setProductionMode(false);
@@ -785,14 +843,20 @@ export default function Settings() {
 
   function onSubmit(data: CompanyFields) {
     setLoading(true);
-    const tokenp = token || localStorage.getItem("token") || "";
-    console.log("token para API:", tokenp);
-    RestApi.securePost(tokenp, "/api/v1/companies", {
-      ...data,
-      modo_produccion: productionMode ? 1 : 0,
-    }).subscribe({
-      next: () => {
+    const tokenp = token ?? "";
+    const payload = { ...data, modo_produccion: productionMode ? 1 : 0 };
+    const url = existingCompanyId
+      ? `/api/v1/companies/${existingCompanyId}`
+      : "/api/v1/companies";
+    const body = existingCompanyId ? { ...payload, _method: "PUT" } : payload;
+
+    RestApi.securePost<{ success: boolean; data: CompanyData }>(tokenp, url, body).subscribe({
+      next: (res) => {
         setLoading(false);
+        if (!existingCompanyId && res.data?.id) {
+          setExistingCompanyId(res.data.id);
+          updateUser({ company_id: res.data.id });
+        }
         toast({
           variant: "success",
           title: "Configuración guardada",
@@ -826,17 +890,17 @@ export default function Settings() {
               </PageSubtitle>
             </HeadingText>
             <HeadingActions>
-              <Button type="button" variant="outline" onClick={handleDiscard} disabled={loading}>
+              <Button type="button" variant="outline" onClick={handleDiscard} disabled={loading || fetching}>
                 Descartar
               </Button>
               <Button
                 type="button"
                 variant="primary"
                 onClick={handleSubmit(onSubmit)}
-                disabled={loading}
+                disabled={loading || fetching}
               >
                 <Icon name="save" size={18} />
-                {loading ? "Guardando…" : "Guardar Cambios"}
+                {fetching ? "Cargando…" : loading ? "Guardando…" : "Guardar Cambios"}
               </Button>
             </HeadingActions>
           </PageHeading>
