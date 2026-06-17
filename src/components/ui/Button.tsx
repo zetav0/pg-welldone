@@ -1,4 +1,4 @@
-import styled, { css } from "styled-components";
+﻿import styled, { css } from "styled-components";
 import { motion } from "framer-motion";
 
 export type ButtonVariant = "primary" | "outline" | "ghost";
@@ -36,9 +36,9 @@ const ButtonRoot = styled(motion.button)<{ $variant: ButtonVariant; $fullWidth?:
       background: ${p.theme.colors.primary};
       color: ${p.theme.colors.white};
       border: none;
-      box-shadow: 0 4px 6px -1px rgba(0, 108, 117, 0.2);
+      box-shadow: 0 4px 6px -1px rgba(113, 42, 226, 0.2);
       &:hover {
-        background: rgba(0, 108, 117, 0.9);
+        background: rgba(113, 42, 226, 0.9);
       }
     `}
 

@@ -44,7 +44,7 @@ const LogoIcon = styled(motion.div)`
   align-items: center;
   justify-content: center;
   color: ${(p) => p.theme.colors.white};
-  box-shadow: 0 10px 15px -3px rgba(0, 108, 117, 0.25);
+  box-shadow: 0 4px 12px -2px ${(p) => p.theme.colors.primaryBgStrong};
   flex-shrink: 0;
 `;
 
@@ -104,7 +104,7 @@ const NavItem = styled(motion.div)<{ $active?: boolean; $collapsed: boolean }>`
   white-space: nowrap;
 
   &:hover {
-    background: ${(p) => !p.$active && "rgba(255,255,255,0.04)"};
+    background: ${(p) => !p.$active && p.theme.colors.chipBg};
     color: ${(p) => !p.$active && p.theme.colors.text};
   }
 `;
@@ -184,7 +184,7 @@ const LogoutIconButton = styled.button`
   transition: background 0.15s;
 
   &:hover {
-    background: rgba(0, 108, 117, 0.85);
+    opacity: 0.88;
   }
 `;
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import styled from "styled-components";
 import { motion } from "framer-motion";
 import { staggerContainer, fadeUp } from "../lib/variants";
@@ -648,7 +648,7 @@ export default function Sales() {
                       title="Stock bajo"
                       description="23 productos bajo el mínimo recomendado"
                       footer={
-                        <span style={{ fontSize: "1.1rem", color: "#eab308" }}>
+                        <span style={{ fontSize: "1.1rem", color: "#b45309" }}>
                           Última revisión: hoy 08:30
                         </span>
                       }
@@ -823,7 +823,7 @@ export default function Sales() {
                   header: "SKU",
                   width: "10rem",
                   render: (r) => (
-                    <span style={{ fontFamily: "monospace", fontSize: "1.1rem", color: "#64748b" }}>
+                    <span style={{ fontFamily: "monospace", fontSize: "1.1rem", color: "#45464d" }}>
                       {r.sku}
                     </span>
                   ),
@@ -888,7 +888,7 @@ export default function Sales() {
                       onSelectionChange={setTableSelected}
                     />
                     {tableSelected.size > 0 && (
-                      <span style={{ fontSize: "1.2rem", color: "#64748b" }}>
+                      <span style={{ fontSize: "1.2rem", color: "#45464d" }}>
                         {tableSelected.size} fila(s) seleccionada(s)
                       </span>
                     )}
@@ -1207,7 +1207,7 @@ export default function Sales() {
                   <>
                     <DemoCard>
                       <DemoCardTop>
-                        <DemoIconBox $color="rgba(0,108,117,0.15)">
+                        <DemoIconBox $color="rgba(113, 42, 226, 0.15)">
                           <Icon name="medication" size={20} />
                         </DemoIconBox>
                         <Badge variant="primary">+12%</Badge>
@@ -1304,7 +1304,7 @@ export default function Sales() {
         description="Este es un modal simple sin formulario."
         size="sm"
       >
-        <p style={{ margin: 0, fontSize: "1.4rem", color: "#94a3b8", lineHeight: 1.6 }}>
+        <p style={{ margin: 0, fontSize: "1.4rem", color: "#76777d", lineHeight: 1.6 }}>
           Puedes poner cualquier contenido aquí — texto, listas, imágenes. El scroll funciona
           automáticamente si el contenido supera la altura de la pantalla.
         </p>
@@ -1370,7 +1370,7 @@ export default function Sales() {
           </Button>
           <Button
             onClick={() => setConfirmOpen(false)}
-            style={{ background: "#ef4444", boxShadow: "none" }}
+            style={{ background: "#ba1a1a", boxShadow: "none" }}
           >
             <Icon name="delete" size={16} />
             Sí, eliminar
@@ -1386,8 +1386,8 @@ export default function Sales() {
         description="Modal tamaño lg para contenido extenso"
         size="lg"
       >
-        <p style={{ margin: 0, fontSize: "1.4rem", color: "#94a3b8", lineHeight: 1.6 }}>
-          Este modal usa <strong style={{ color: "#f1f5f9" }}>size="lg"</strong> — ideal para
+        <p style={{ margin: 0, fontSize: "1.4rem", color: "#76777d", lineHeight: 1.6 }}>
+          Este modal usa <strong style={{ color: "#191c1e" }}>size="lg"</strong> — ideal para
           tablas, formularios complejos o vistas detalle. El ancho máximo es 72rem y el scroll
           vertical se activa automáticamente.
         </p>
@@ -1407,7 +1407,7 @@ export default function Sales() {
         title="Detalle de venta"
         description="Panel lateral deslizante desde la derecha"
       >
-        <p style={{ margin: 0, fontSize: "1.4rem", color: "#94a3b8", lineHeight: 1.6 }}>
+        <p style={{ margin: 0, fontSize: "1.4rem", color: "#76777d", lineHeight: 1.6 }}>
           El Drawer se desliza desde el lateral y es ideal para detalles, filtros o formularios
           secundarios sin perder el contexto de la página.
         </p>
@@ -1427,8 +1427,8 @@ export default function Sales() {
         title="Menú lateral"
         description={'side="left", size="sm"'}
       >
-        <p style={{ margin: 0, fontSize: "1.4rem", color: "#94a3b8", lineHeight: 1.6 }}>
-          Usa <strong style={{ color: "#f1f5f9" }}>side="left"</strong> para navegación o paneles
+        <p style={{ margin: 0, fontSize: "1.4rem", color: "#76777d", lineHeight: 1.6 }}>
+          Usa <strong style={{ color: "#191c1e" }}>side="left"</strong> para navegación o paneles
           contextuales que entran desde la izquierda.
         </p>
       </Drawer>

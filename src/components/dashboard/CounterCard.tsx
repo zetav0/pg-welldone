@@ -1,4 +1,4 @@
-import styled from "styled-components";
+﻿import styled from "styled-components";
 import { useApp } from "../../context/AppContext";
 import { Icon } from "../ui/Icon";
 import { Badge } from "../ui/Badge";
@@ -14,7 +14,7 @@ const CardRoot = styled.div`
   transition: border-color 0.15s;
 
   &:hover {
-    border-color: rgba(0, 108, 117, 0.4);
+    border-color: rgba(113, 42, 226, 0.4);
   }
 `;
 

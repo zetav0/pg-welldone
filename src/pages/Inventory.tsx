@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import styled from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
 import { staggerContainer, fadeUp } from "../lib/variants";
@@ -543,10 +543,10 @@ const SaveBtn = styled.button`
   justify-content: center;
   gap: 0.6rem;
   transition: background 0.15s;
-  box-shadow: 0 4px 6px -1px rgba(0, 108, 117, 0.25);
+  box-shadow: 0 4px 6px -1px rgba(113, 42, 226, 0.25);
 
   &:hover {
-    background: rgba(0, 108, 117, 0.9);
+    background: rgba(113, 42, 226, 0.9);
   }
 `;
 

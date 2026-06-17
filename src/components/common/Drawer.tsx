@@ -185,7 +185,7 @@ function Drawer({
                             style={{
                               fontSize: "1.8rem",
                               fontWeight: 700,
-                              color: "var(--color-text, #f1f5f9)",
+                              color: "var(--color-text, #191c1e)",
                               lineHeight: 1.2,
                             }}
                           >
@@ -198,7 +198,7 @@ function Drawer({
                           <span
                             style={{
                               fontSize: "1.3rem",
-                              color: "var(--color-text-muted, #64748b)",
+                              color: "var(--color-text-muted, #45464d)",
                             }}
                           >
                             {description}

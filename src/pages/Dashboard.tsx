@@ -1,4 +1,4 @@
-import styled from "styled-components";
+﻿import styled from "styled-components";
 import { motion } from "framer-motion";
 import { staggerContainer, fadeUp } from "../lib/variants";
 import { PageShell } from "../components/layout/PageShell";
@@ -77,7 +77,7 @@ const HealthButton = styled.button`
   transition: background 0.15s;
 
   &:hover {
-    background: rgba(0, 108, 117, 0.9);
+    background: rgba(113, 42, 226, 0.9);
   }
 `;
 
@@ -113,7 +113,7 @@ const MiniBar = styled.div<{ $h: number; $active?: boolean }>`
   flex: 1;
   height: ${(p) => p.$h}%;
   border-radius: 0.2rem 0.2rem 0 0;
-  background: ${(p) => (p.$active ? "rgba(0,108,117,0.5)" : p.theme.colors.chipBg)};
+  background: ${(p) => (p.$active ? "rgba(113, 42, 226, 0.5)" : p.theme.colors.chipBg)};
 `;
 
 /* ── Footer ─────────────────────────────────────────── */
@@ -180,7 +180,7 @@ const pendingNote = (
     style={{
       margin: 0,
       fontSize: "1.2rem",
-      color: "#64748b",
+      color: "#45464d",
       display: "flex",
       alignItems: "center",
       gap: "0.4rem",
@@ -195,7 +195,7 @@ const pendingNote = (
 
 const stockAlert = (
   <p
-    style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "#ef4444", cursor: "pointer" }}
+    style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "#ba1a1a", cursor: "pointer" }}
   >
     Review Critical Items →
   </p>
