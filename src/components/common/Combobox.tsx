@@ -1,4 +1,12 @@
-import React, { forwardRef, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "../ui/Icon";
 
 export interface ComboboxOption {
@@ -7,21 +15,15 @@ export interface ComboboxOption {
 }
 
 interface ComboboxCustomProps {
-  /** Label rendered above the field. */
   label?: string;
   required?: boolean;
-  /** Validation message; when present the field (and its label) turns red. */
   error?: string;
-  /** Selected option id. */
   value?: string | null;
   options?: ComboboxOption[];
   onChange?: (value: string) => void;
   onBlur?: () => void;
-  /** Text shown on the trigger when nothing is selected. */
   placeholder?: string;
-  /** Placeholder for the search box inside the dropdown. */
   searchPlaceholder?: string;
-  /** Shown when the search yields no matches. */
   emptyMessage?: string;
   disabled?: boolean;
   id?: string;
@@ -64,10 +66,14 @@ export const ComboboxCustom = forwardRef<HTMLButtonElement, ComboboxCustomProps>
     ref
   ) {
     const containerRef = useRef<HTMLDivElement | null>(null);
-    const searchRef = useRef<HTMLInputElement | null>(null);
-    const [open, setOpen] = useState(false);
-    const [query, setQuery] = useState("");
+    const triggerRef   = useRef<HTMLButtonElement | null>(null);
+    const dropdownRef  = useRef<HTMLDivElement | null>(null);
+    const searchRef    = useRef<HTMLInputElement | null>(null);
+
+    const [open, setOpen]               = useState(false);
+    const [query, setQuery]             = useState("");
     const [activeIndex, setActiveIndex] = useState(0);
+    const [pos, setPos]                 = useState({ top: 0, left: 0, width: 0 });
 
     const selected = useMemo(
       () => options.find((o) => o.id === value) ?? null,
@@ -80,24 +86,52 @@ export const ComboboxCustom = forwardRef<HTMLButtonElement, ComboboxCustomProps>
       return options.filter((o) => o.title.toLowerCase().includes(q));
     }, [options, query]);
 
-    const close = () => {
-      setOpen(false);
-      setQuery("");
-      onBlur?.();
-    };
+    /* Merge the forwarded ref with the internal triggerRef */
+    const mergeRef = useCallback(
+      (node: HTMLButtonElement | null) => {
+        triggerRef.current = node;
+        if (typeof ref === "function") ref(node);
+        else if (ref) (ref as React.MutableRefObject<HTMLButtonElement | null>).current = node;
+      },
+      [ref]
+    );
 
-    // Close on outside click.
+    /* Recalculate dropdown position from trigger rect */
+    const updatePos = useCallback(() => {
+      if (!triggerRef.current) return;
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+    }, []);
+
+    /* Reposition on scroll / resize while open */
+    useEffect(() => {
+      if (!open) return;
+      updatePos();
+      window.addEventListener("scroll", updatePos, true);
+      window.addEventListener("resize", updatePos);
+      return () => {
+        window.removeEventListener("scroll", updatePos, true);
+        window.removeEventListener("resize", updatePos);
+      };
+    }, [open, updatePos]);
+
+    /* Close on outside click — check both container and portal dropdown */
     useEffect(() => {
       if (!open) return;
       const onPointerDown = (e: MouseEvent) => {
-        if (!containerRef.current?.contains(e.target as Node)) close();
+        if (
+          !containerRef.current?.contains(e.target as Node) &&
+          !dropdownRef.current?.contains(e.target as Node)
+        ) {
+          close();
+        }
       };
       document.addEventListener("mousedown", onPointerDown);
       return () => document.removeEventListener("mousedown", onPointerDown);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open]);
 
-    // Focus the search box when opening.
+    /* Focus search input when opening */
     useEffect(() => {
       if (open) {
         setActiveIndex(0);
@@ -105,11 +139,15 @@ export const ComboboxCustom = forwardRef<HTMLButtonElement, ComboboxCustomProps>
       }
     }, [open]);
 
-    const select = (option: ComboboxOption) => {
-      onChange?.(option.id);
+    const close = () => {
       setOpen(false);
       setQuery("");
       onBlur?.();
+    };
+
+    const select = (option: ComboboxOption) => {
+      onChange?.(option.id);
+      close();
     };
 
     const onSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -149,7 +187,7 @@ export const ComboboxCustom = forwardRef<HTMLButtonElement, ComboboxCustomProps>
 
         <div className="relative">
           <button
-            ref={ref}
+            ref={mergeRef}
             type="button"
             id={id}
             name={name}
@@ -159,9 +197,12 @@ export const ComboboxCustom = forwardRef<HTMLButtonElement, ComboboxCustomProps>
             aria-haspopup="listbox"
             aria-expanded={open}
             className={[triggerBase, borderClass, className].filter(Boolean).join(" ")}
-            onClick={() => !disabled && setOpen((v) => !v)}
+            onClick={() => {
+              if (disabled) return;
+              if (!open) updatePos();
+              setOpen((v) => !v);
+            }}
             onBlur={() => {
-              // Let clicks inside the panel land before firing blur.
               if (!open) onBlur?.();
             }}
           >
@@ -172,9 +213,22 @@ export const ComboboxCustom = forwardRef<HTMLButtonElement, ComboboxCustomProps>
               <Icon name={open ? "expand_less" : "expand_more"} size={20} />
             </span>
           </button>
+        </div>
 
-          {open && (
-            <div className="absolute z-20 mt-[0.4rem] w-full overflow-hidden rounded-[0.8rem] border border-border-strong bg-surface shadow-[0_8px_24px_-8px_rgba(0,0,0,0.18)]">
+        {/* Portal dropdown — renders at document root to escape Drawer overflow */}
+        {open &&
+          createPortal(
+            <div
+              ref={dropdownRef}
+              style={{
+                position: "fixed",
+                top: pos.top,
+                left: pos.left,
+                width: pos.width,
+                zIndex: 9999,
+              }}
+              className="overflow-hidden rounded-[0.8rem] border border-border-strong bg-surface shadow-[0_8px_24px_-8px_rgba(0,0,0,0.18)]"
+            >
               <div className="border-b border-border p-[0.8rem]">
                 <div className="flex items-center gap-[0.6rem] rounded-[0.6rem] bg-background px-[1rem]">
                   <Icon name="search" size={16} />
@@ -203,7 +257,7 @@ export const ComboboxCustom = forwardRef<HTMLButtonElement, ComboboxCustomProps>
                 )}
                 {filtered.map((option, i) => {
                   const isSelected = option.id === value;
-                  const isActive = i === activeIndex;
+                  const isActive   = i === activeIndex;
                   return (
                     <li key={option.id} role="option" aria-selected={isSelected}>
                       <button
@@ -211,7 +265,7 @@ export const ComboboxCustom = forwardRef<HTMLButtonElement, ComboboxCustomProps>
                         data-cy={`${dataCy}-option`}
                         className={[
                           "flex w-full items-center justify-between gap-[0.8rem] px-[1.4rem] py-[1rem] text-left text-[1.4rem] transition-colors",
-                          isActive ? "bg-[rgba(113,42,226,0.08)]" : "bg-transparent",
+                          isActive   ? "bg-[rgba(113,42,226,0.08)]" : "bg-transparent",
                           isSelected ? "font-bold text-primary" : "text-text",
                         ].join(" ")}
                         onMouseEnter={() => setActiveIndex(i)}
@@ -224,9 +278,9 @@ export const ComboboxCustom = forwardRef<HTMLButtonElement, ComboboxCustomProps>
                   );
                 })}
               </ul>
-            </div>
+            </div>,
+            document.body
           )}
-        </div>
 
         {error && (
           <p className="m-0 flex items-center gap-[0.4rem] text-[1.2rem] text-danger">

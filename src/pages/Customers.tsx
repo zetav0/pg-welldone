@@ -413,6 +413,28 @@ const TypeToggle = styled.div`
   gap: 0.8rem;
 `;
 
+const FormSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  padding: 1.6rem;
+  border-radius: 1rem;
+  background: ${(p) => p.theme.colors.background};
+  border: 1px solid ${(p) => p.theme.colors.border};
+`;
+
+const FormSectionTitle = styled.p`
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: ${(p) => p.theme.colors.textMuted};
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+`;
+
 const TypeOption = styled.label<{ $active: boolean }>`
   display: flex;
   align-items: center;
@@ -774,10 +796,13 @@ export default function Customers() {
 
   const onSave = handleSubmit((data) => {
     if (drawerMode === "new") {
-      RestApi.securePost(token ?? "", "/api/v1/clients", {
+      const { nombre_comercial, ...rest } = data;
+      const payload = {
         company_id: activeCompanyId,
-        ...data,
-      }).subscribe({
+        ...rest,
+        ...(data.tipo_documento === "6" && nombre_comercial ? { nombre_comercial } : {}),
+      };
+      RestApi.securePost(token ?? "", "/api/v1/clients", payload).subscribe({
         next: () => {
           toast({ variant: "success", title: "Cliente registrado", description: data.razon_social });
           closeDrawer();
@@ -938,187 +963,207 @@ export default function Customers() {
         size="md"
       >
         <DrawerForm>
-          {/* Empresa */}
-          <FormGroup>
-            <FormLabel>Empresa</FormLabel>
-            <ComboboxCustom
-              options={companyOptions}
-              value={activeCompanyId ? String(activeCompanyId) : null}
-              onChange={(val) => setActiveCompanyId(Number(val))}
-              placeholder="Selecciona empresa…"
-              searchPlaceholder="Buscar por nombre o RUC…"
-              dataCy="cy-company-select"
-            />
-          </FormGroup>
+          {/* ── Sección 1: Empresa y tipo ── */}
+          <FormSection>
+            <FormSectionTitle>
+              <Icon name="domain" size={14} />
+              Identificación
+            </FormSectionTitle>
 
-          {/* Tipo de cliente */}
-          <FormGroup>
-            <FormLabel>Tipo de cliente</FormLabel>
-            <TypeToggle>
-              {([["6", "corporate_fare", "Empresa"], ["1", "person", "Persona Natural"]] as [string, string, string][]).map(([val, icon, label]) => (
-                <TypeOption key={val} $active={currentTipoDoc === val}>
-                  <input
-                    type="radio"
-                    name="tipo_documento"
-                    value={val}
-                    checked={currentTipoDoc === val}
-                    onChange={() => { setValue("tipo_documento", val as "1" | "6", { shouldValidate: true }); setValue("numero_documento", ""); }}
-                  />
-                  <Icon name={icon} size={16} />
-                  {label}
-                </TypeOption>
-              ))}
-            </TypeToggle>
-          </FormGroup>
-
-          {/* Número de documento */}
-          <FormGroup>
-            <FormLabel>{currentTipoDoc === "6" ? "RUC (11 dígitos)" : "DNI (8 dígitos)"}</FormLabel>
-            <FormInput
-              type="text"
-              maxLength={currentTipoDoc === "6" ? 11 : 8}
-              placeholder={currentTipoDoc === "6" ? "20XXXXXXXXX" : "XXXXXXXX"}
-              {...register("numero_documento")}
-              onChange={(e) => setValue("numero_documento", e.target.value.replace(/\D/g, ""), { shouldValidate: true })}
-            />
-            {errors.numero_documento && <ErrorMsg><Icon name="error" size={14} />{errors.numero_documento.message}</ErrorMsg>}
-          </FormGroup>
-
-          {/* Razón Social */}
-          <FormGroup>
-            <FormLabel>{currentTipoDoc === "6" ? "Razón Social" : "Nombre Completo"}</FormLabel>
-            <FormInput
-              type="text"
-              placeholder={currentTipoDoc === "6" ? "Ej. Empresa S.A.C." : "Ej. Juan Pérez García"}
-              {...register("razon_social")}
-            />
-            {errors.razon_social && <ErrorMsg><Icon name="error" size={14} />{errors.razon_social.message}</ErrorMsg>}
-          </FormGroup>
-
-          {/* Nombre Comercial — solo empresa */}
-          {currentTipoDoc === "6" && (
             <FormGroup>
-              <FormLabel>Nombre Comercial <span style={{ fontWeight: 400, opacity: 0.6 }}>(opcional)</span></FormLabel>
+              <FormLabel>Empresa emisora</FormLabel>
+              <ComboboxCustom
+                options={companyOptions}
+                value={activeCompanyId ? String(activeCompanyId) : null}
+                onChange={(val) => setActiveCompanyId(Number(val))}
+                placeholder="Selecciona empresa…"
+                searchPlaceholder="Buscar por nombre o RUC…"
+                dataCy="cy-company-select"
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <FormLabel>Tipo de cliente</FormLabel>
+              <TypeToggle>
+                {([["6", "corporate_fare", "Empresa (RUC)"], ["1", "person", "Persona Natural (DNI)"]] as [string, string, string][]).map(([val, icon, label]) => (
+                  <TypeOption key={val} $active={currentTipoDoc === val}>
+                    <input
+                      type="radio"
+                      name="tipo_documento"
+                      value={val}
+                      checked={currentTipoDoc === val}
+                      onChange={() => {
+                        setValue("tipo_documento", val as "1" | "6", { shouldValidate: true });
+                        setValue("numero_documento", "");
+                        setValue("nombre_comercial", "");
+                      }}
+                    />
+                    <Icon name={icon} size={16} />
+                    {label}
+                  </TypeOption>
+                ))}
+              </TypeToggle>
+            </FormGroup>
+
+            <FormGroup>
+              <FormLabel>{currentTipoDoc === "6" ? "RUC (11 dígitos)" : "DNI (8 dígitos)"}</FormLabel>
               <FormInput
                 type="text"
-                placeholder="Ej. Cliente Corp"
-                {...register("nombre_comercial")}
+                maxLength={currentTipoDoc === "6" ? 11 : 8}
+                placeholder={currentTipoDoc === "6" ? "20XXXXXXXXX" : "XXXXXXXX"}
+                {...register("numero_documento")}
+                onChange={(e) => setValue("numero_documento", e.target.value.replace(/\D/g, ""), { shouldValidate: true })}
               />
+              {errors.numero_documento && <ErrorMsg><Icon name="error" size={14} />{errors.numero_documento.message}</ErrorMsg>}
             </FormGroup>
-          )}
+          </FormSection>
 
-          {/* Email + Teléfono */}
-          <FormRow>
-            <FormGroup>
-              <FormLabel>Correo electrónico</FormLabel>
-              <FormInput
-                type="email"
-                placeholder="correo@empresa.com"
-                {...register("email")}
-              />
-              {errors.email && <ErrorMsg><Icon name="error" size={14} />{errors.email.message}</ErrorMsg>}
-            </FormGroup>
-            <FormGroup>
-              <FormLabel>Teléfono</FormLabel>
-              <FormInput
-                type="tel"
-                placeholder="987654321"
-                {...register("telefono")}
-              />
-            </FormGroup>
-          </FormRow>
+          {/* ── Sección 2: Datos del cliente (según tipo) ── */}
+          <FormSection>
+            <FormSectionTitle>
+              <Icon name={currentTipoDoc === "6" ? "corporate_fare" : "person"} size={14} />
+              {currentTipoDoc === "6" ? "Datos de la Empresa" : "Datos Personales"}
+            </FormSectionTitle>
 
-          {/* Dirección + Ubigeo */}
-          <FormRow>
-            <FormGroup style={{ flex: 2 }}>
-              <FormLabel>Dirección fiscal</FormLabel>
+            <FormGroup>
+              <FormLabel>{currentTipoDoc === "6" ? "Razón Social" : "Nombre Completo"}</FormLabel>
               <FormInput
                 type="text"
-                placeholder="Av. Ejemplo 123"
-                {...register("direccion")}
+                placeholder={currentTipoDoc === "6" ? "Ej. CLIENTE CORPORATIVO SAC" : "Ej. Juan Carlos Pérez López"}
+                {...register("razon_social")}
               />
-              {errors.direccion && <ErrorMsg><Icon name="error" size={14} />{errors.direccion.message}</ErrorMsg>}
+              {errors.razon_social && <ErrorMsg><Icon name="error" size={14} />{errors.razon_social.message}</ErrorMsg>}
             </FormGroup>
-            <FormGroup style={{ flex: 1 }}>
-              <FormLabel>Ubigeo</FormLabel>
-              <FormInput
-                type="text"
-                maxLength={6}
-                placeholder="150101"
-                {...register("ubigeo")}
-                onChange={(e) => setValue("ubigeo", e.target.value.replace(/\D/g, ""), { shouldValidate: true })}
-              />
-              {errors.ubigeo && <ErrorMsg><Icon name="error" size={14} />{errors.ubigeo.message}</ErrorMsg>}
-            </FormGroup>
-          </FormRow>
 
-          {/* Ubicación: Departamento → Provincia → Distrito */}
-          <FormGroup>
-            <FormLabel>Departamento</FormLabel>
-            <Controller
-              name="departamento"
-              control={control}
-              render={({ field }) => (
-                <ComboboxCustom
-                  options={depOptions}
-                  value={field.value || null}
-                  onChange={(val) => {
-                    field.onChange(val);
-                    setValue("provincia", "", { shouldValidate: false });
-                    setValue("distrito",  "", { shouldValidate: false });
-                  }}
-                  placeholder="Selecciona departamento…"
-                  searchPlaceholder="Buscar departamento…"
-                  error={errors.departamento?.message}
-                  dataCy="cy-departamento"
+            {currentTipoDoc === "6" && (
+              <FormGroup>
+                <FormLabel>Nombre Comercial <span style={{ fontWeight: 400, opacity: 0.6 }}>(opcional)</span></FormLabel>
+                <FormInput
+                  type="text"
+                  placeholder="Ej. Cliente Corp"
+                  {...register("nombre_comercial")}
                 />
-              )}
-            />
-          </FormGroup>
+              </FormGroup>
+            )}
 
-          <FormRow>
+            <FormRow>
+              <FormGroup>
+                <FormLabel>Correo electrónico</FormLabel>
+                <FormInput
+                  type="email"
+                  placeholder={currentTipoDoc === "6" ? "contacto@empresa.com" : "juan.perez@email.com"}
+                  {...register("email")}
+                />
+                {errors.email && <ErrorMsg><Icon name="error" size={14} />{errors.email.message}</ErrorMsg>}
+              </FormGroup>
+              <FormGroup>
+                <FormLabel>Teléfono</FormLabel>
+                <FormInput
+                  type="tel"
+                  placeholder={currentTipoDoc === "6" ? "01-2345678" : "987654321"}
+                  {...register("telefono")}
+                />
+              </FormGroup>
+            </FormRow>
+          </FormSection>
+
+          {/* ── Sección 3: Dirección y ubicación ── */}
+          <FormSection>
+            <FormSectionTitle>
+              <Icon name="location_on" size={14} />
+              Dirección Fiscal
+            </FormSectionTitle>
+
+            <FormRow>
+              <FormGroup style={{ flex: 2 }}>
+                <FormLabel>Dirección</FormLabel>
+                <FormInput
+                  type="text"
+                  placeholder="Av. Javier Prado 1234"
+                  {...register("direccion")}
+                />
+                {errors.direccion && <ErrorMsg><Icon name="error" size={14} />{errors.direccion.message}</ErrorMsg>}
+              </FormGroup>
+              <FormGroup style={{ flex: 1 }}>
+                <FormLabel>Ubigeo</FormLabel>
+                <FormInput
+                  type="text"
+                  maxLength={6}
+                  placeholder="150101"
+                  {...register("ubigeo")}
+                  onChange={(e) => setValue("ubigeo", e.target.value.replace(/\D/g, ""), { shouldValidate: true })}
+                />
+                {errors.ubigeo && <ErrorMsg><Icon name="error" size={14} />{errors.ubigeo.message}</ErrorMsg>}
+              </FormGroup>
+            </FormRow>
+
             <FormGroup>
-              <FormLabel>Provincia</FormLabel>
+              <FormLabel>Departamento</FormLabel>
               <Controller
-                name="provincia"
+                name="departamento"
                 control={control}
                 render={({ field }) => (
                   <ComboboxCustom
-                    options={provOptions}
+                    options={depOptions}
                     value={field.value || null}
                     onChange={(val) => {
                       field.onChange(val);
-                      setValue("distrito", "", { shouldValidate: false });
+                      setValue("provincia", "", { shouldValidate: false });
+                      setValue("distrito",  "", { shouldValidate: false });
                     }}
-                    placeholder="Selecciona provincia…"
-                    searchPlaceholder="Buscar provincia…"
-                    disabled={!watchedDep}
-                    error={errors.provincia?.message}
-                    dataCy="cy-provincia"
+                    placeholder="Selecciona departamento…"
+                    searchPlaceholder="Buscar departamento…"
+                    error={errors.departamento?.message}
+                    dataCy="cy-departamento"
                   />
                 )}
               />
             </FormGroup>
-            <FormGroup>
-              <FormLabel>Distrito</FormLabel>
-              <Controller
-                name="distrito"
-                control={control}
-                render={({ field }) => (
-                  <ComboboxCustom
-                    options={distOptions}
-                    value={field.value || null}
-                    onChange={field.onChange}
-                    placeholder="Selecciona distrito…"
-                    searchPlaceholder="Buscar distrito…"
-                    disabled={!watchedProv}
-                    error={errors.distrito?.message}
-                    dataCy="cy-distrito"
-                  />
-                )}
-              />
-            </FormGroup>
-          </FormRow>
+
+            <FormRow>
+              <FormGroup>
+                <FormLabel>Provincia</FormLabel>
+                <Controller
+                  name="provincia"
+                  control={control}
+                  render={({ field }) => (
+                    <ComboboxCustom
+                      options={provOptions}
+                      value={field.value || null}
+                      onChange={(val) => {
+                        field.onChange(val);
+                        setValue("distrito", "", { shouldValidate: false });
+                      }}
+                      placeholder="Selecciona…"
+                      searchPlaceholder="Buscar provincia…"
+                      disabled={!watchedDep}
+                      error={errors.provincia?.message}
+                      dataCy="cy-provincia"
+                    />
+                  )}
+                />
+              </FormGroup>
+              <FormGroup>
+                <FormLabel>Distrito</FormLabel>
+                <Controller
+                  name="distrito"
+                  control={control}
+                  render={({ field }) => (
+                    <ComboboxCustom
+                      options={distOptions}
+                      value={field.value || null}
+                      onChange={field.onChange}
+                      placeholder="Selecciona distrito…"
+                      searchPlaceholder="Buscar distrito…"
+                      disabled={!watchedProv}
+                      error={errors.distrito?.message}
+                      dataCy="cy-distrito"
+                    />
+                  )}
+                />
+              </FormGroup>
+            </FormRow>
+          </FormSection>
         </DrawerForm>
 
         <Drawer.Footer>
