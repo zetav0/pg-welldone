@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
 import { ThemeProvider } from "styled-components";
 import { AppProvider } from "./context/AppContext";
+import { ToastProvider } from "./components/common/Toast";
 import { GlobalStyle, theme } from "./theme";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -20,7 +21,9 @@ export default function App() {
     <ThemeProvider theme={theme}>
       <GlobalStyle />
       <AppProvider>
-        <RouterProvider router={router} />
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
       </AppProvider>
     </ThemeProvider>
   );

@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { staggerContainer, fadeUp } from "../lib/variants";
 import { PageShell } from "../components/layout/PageShell";
 import { Modal } from "../components/ui/Modal";
+import { Drawer } from "../components/common/Drawer";
+import { useToast } from "../components/common/Toast";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { Icon } from "../components/ui/Icon";
@@ -143,6 +145,12 @@ export default function Sales() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [lgOpen, setLgOpen] = useState(false);
 
+  const [drawerRightOpen, setDrawerRightOpen] = useState(false);
+  const [drawerLeftOpen, setDrawerLeftOpen] = useState(false);
+  const [drawerFormOpen, setDrawerFormOpen] = useState(false);
+
+  const { toast } = useToast();
+
   return (
     <PageShell>
       <ContentArea>
@@ -199,6 +207,115 @@ export default function Sales() {
                 <Button variant="outline" onClick={() => setLgOpen(true)}>
                   <Icon name="open_in_full" size={16} />
                   Modal lg
+                </Button>
+              </Row>
+            </Card>
+          </Section>
+
+          {/* Drawers */}
+          <Section variants={fadeUp}>
+            <SectionTitle>Drawer</SectionTitle>
+            <Card>
+              <Row>
+                <Label>Derecha</Label>
+                <Button variant="outline" onClick={() => setDrawerRightOpen(true)}>
+                  <Icon name="dock_to_left" size={16} />
+                  Abrir (derecha)
+                </Button>
+              </Row>
+
+              <Divider />
+
+              <Row>
+                <Label>Izquierda</Label>
+                <Button variant="outline" onClick={() => setDrawerLeftOpen(true)}>
+                  <Icon name="dock_to_right" size={16} />
+                  Abrir (izquierda)
+                </Button>
+              </Row>
+
+              <Divider />
+
+              <Row>
+                <Label>Formulario</Label>
+                <Button onClick={() => setDrawerFormOpen(true)}>
+                  <Icon name="filter_list" size={16} />
+                  Panel de filtros
+                </Button>
+              </Row>
+            </Card>
+          </Section>
+
+          {/* Toasts */}
+          <Section variants={fadeUp}>
+            <SectionTitle>Toast</SectionTitle>
+            <Card>
+              <Row>
+                <Label>Variantes</Label>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    toast({
+                      variant: "success",
+                      title: "Venta registrada",
+                      description: "La transacción se guardó correctamente.",
+                    })
+                  }
+                >
+                  <Icon name="check_circle" size={16} />
+                  Success
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    toast({
+                      variant: "error",
+                      title: "Error al guardar",
+                      description: "No se pudo completar la operación.",
+                    })
+                  }
+                >
+                  <Icon name="error" size={16} />
+                  Error
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    toast({
+                      variant: "warning",
+                      title: "Stock bajo",
+                      description: "Quedan 3 unidades de Amoxicilina.",
+                    })
+                  }
+                >
+                  <Icon name="warning" size={16} />
+                  Warning
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => toast({ variant: "info", title: "Sincronización en curso" })}
+                >
+                  <Icon name="info" size={16} />
+                  Info
+                </Button>
+              </Row>
+
+              <Divider />
+
+              <Row>
+                <Label>Persistente</Label>
+                <Button
+                  onClick={() =>
+                    toast({
+                      variant: "info",
+                      title: "No se cierra solo",
+                      description: "duration=0 — debes cerrarlo manualmente.",
+                      duration: 0,
+                    })
+                  }
+                >
+                  <Icon name="push_pin" size={16} />
+                  Sin auto-cierre
                 </Button>
               </Row>
             </Card>
@@ -348,6 +465,75 @@ export default function Sales() {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* ── Drawers ──────────────────────────────────────── */}
+
+      {/* 1. Lateral derecho (default) */}
+      <Drawer
+        open={drawerRightOpen}
+        onClose={() => setDrawerRightOpen(false)}
+        title="Detalle de venta"
+        description="Panel lateral deslizante desde la derecha"
+      >
+        <p style={{ margin: 0, fontSize: "1.4rem", color: "#94a3b8", lineHeight: 1.6 }}>
+          El Drawer se desliza desde el lateral y es ideal para detalles, filtros o formularios
+          secundarios sin perder el contexto de la página.
+        </p>
+        <Drawer.Footer>
+          <Button variant="outline" onClick={() => setDrawerRightOpen(false)}>
+            Cerrar
+          </Button>
+        </Drawer.Footer>
+      </Drawer>
+
+      {/* 2. Lateral izquierdo */}
+      <Drawer
+        open={drawerLeftOpen}
+        onClose={() => setDrawerLeftOpen(false)}
+        side="left"
+        size="sm"
+        title="Menú lateral"
+        description={'side="left", size="sm"'}
+      >
+        <p style={{ margin: 0, fontSize: "1.4rem", color: "#94a3b8", lineHeight: 1.6 }}>
+          Usa <strong style={{ color: "#f1f5f9" }}>side="left"</strong> para navegación o paneles
+          contextuales que entran desde la izquierda.
+        </p>
+      </Drawer>
+
+      {/* 3. Formulario con preventClose */}
+      <Drawer
+        open={drawerFormOpen}
+        onClose={() => setDrawerFormOpen(false)}
+        size="md"
+        title="Filtros de ventas"
+        description="No se cierra al hacer clic fuera"
+        preventClose
+      >
+        <FormGrid>
+          <FieldLabel>
+            Cliente
+            <FieldInput type="text" placeholder="Nombre del cliente" />
+          </FieldLabel>
+          <FieldLabel>
+            Desde
+            <FieldInput type="date" />
+          </FieldLabel>
+          <FieldLabel>
+            Hasta
+            <FieldInput type="date" />
+          </FieldLabel>
+        </FormGrid>
+        <Drawer.Footer>
+          <Button variant="outline" onClick={() => setDrawerFormOpen(false)}>
+            Cancelar
+          </Button>
+          <Button onClick={() => setDrawerFormOpen(false)}>
+            <Icon name="check" size={16} />
+            Aplicar filtros
+          </Button>
+        </Drawer.Footer>
+      </Drawer>
     </PageShell>
   );
 }
