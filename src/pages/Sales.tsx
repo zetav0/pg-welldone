@@ -8,6 +8,7 @@ import { Drawer } from "../components/common/Drawer";
 import { useToast } from "../components/common/Toast";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
+import { Tooltip } from "../components/ui/Tooltip";
 import { Icon } from "../components/ui/Icon";
 import { Loader } from "../components/ui/Loader";
 import { Skeleton } from "../components/ui/Skeleton";
@@ -89,6 +90,34 @@ const Label = styled.span`
   color: ${(p) => p.theme.colors.textMuted};
   font-weight: 500;
   min-width: 8rem;
+`;
+
+/* ── Tooltip demo helpers ────────────────────────────── */
+
+const TriggerText = styled.span`
+  font-size: 1.3rem;
+  color: ${(p) => p.theme.colors.textSubtle};
+  border-bottom: 1px dashed ${(p) => p.theme.colors.borderStrong};
+  cursor: default;
+  padding-bottom: 0.1rem;
+`;
+
+const IconTrigger = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: ${(p) => p.theme.colors.surface};
+  border: 1px solid ${(p) => p.theme.colors.borderStrong};
+  border-radius: 50%;
+  width: 3.6rem;
+  height: 3.6rem;
+  color: ${(p) => p.theme.colors.textMuted};
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  &:hover {
+    color: ${(p) => p.theme.colors.text};
+    border-color: ${(p) => p.theme.colors.primary};
+  }
 `;
 
 /* ── Modal form demo ─────────────────────────────────── */
@@ -521,6 +550,144 @@ export default function Sales() {
                     Restaurar
                   </Badge>
                 )}
+              </Row>
+
+            </SectionCard>
+          </Section>
+
+          {/* Tooltip */}
+          <Section variants={fadeUp}>
+            <SectionTitle>Tooltip</SectionTitle>
+            <SectionCard>
+
+              {/* Sides */}
+              <Row>
+                <Label>Lados</Label>
+                <Tooltip content="Aparece arriba" side="top">
+                  <Button variant="outline">Top</Button>
+                </Tooltip>
+                <Tooltip content="Aparece abajo" side="bottom">
+                  <Button variant="outline">Bottom</Button>
+                </Tooltip>
+                <Tooltip content="Aparece a la izquierda" side="left">
+                  <Button variant="outline">Left</Button>
+                </Tooltip>
+                <Tooltip content="Aparece a la derecha" side="right">
+                  <Button variant="outline">Right</Button>
+                </Tooltip>
+              </Row>
+              <Divider />
+
+              {/* Alignment */}
+              <Row>
+                <Label>Alineación</Label>
+                <Tooltip content="Alineado al inicio" side="bottom" align="start">
+                  <Button variant="outline">Start</Button>
+                </Tooltip>
+                <Tooltip content="Centrado (default)" side="bottom" align="center">
+                  <Button variant="outline">Center</Button>
+                </Tooltip>
+                <Tooltip content="Alineado al final" side="bottom" align="end">
+                  <Button variant="outline">End</Button>
+                </Tooltip>
+              </Row>
+              <Divider />
+
+              {/* Rich content */}
+              <Row>
+                <Label>Rich</Label>
+                <Tooltip
+                  content={
+                    <Tooltip.Rich
+                      icon="inventory_2"
+                      title="Paracetamol 500mg"
+                      description="Stock: 142 unidades · Expira: 15/03/2026"
+                    />
+                  }
+                  maxWidth="28rem"
+                  side="top"
+                >
+                  <Button>
+                    <Icon name="info" size={15} />
+                    Ver producto
+                  </Button>
+                </Tooltip>
+                <Tooltip
+                  content={
+                    <Tooltip.Rich
+                      icon="person"
+                      title="Dr. Hernan Villa"
+                      description="Farmacéutico · Turno mañana · Activo"
+                    />
+                  }
+                  maxWidth="26rem"
+                  side="right"
+                >
+                  <Button variant="outline">
+                    <Icon name="account_circle" size={15} />
+                    Perfil
+                  </Button>
+                </Tooltip>
+                <Tooltip
+                  content={
+                    <Tooltip.Rich
+                      icon="warning"
+                      title="Stock bajo"
+                      description="23 productos bajo el mínimo recomendado"
+                      footer={
+                        <span style={{ fontSize: "1.1rem", color: "#eab308" }}>
+                          Última revisión: hoy 08:30
+                        </span>
+                      }
+                    />
+                  }
+                  maxWidth="28rem"
+                  side="top"
+                >
+                  <span style={{ display: "inline-flex" }}>
+                    <Badge variant="warning" icon="warning">Revisar</Badge>
+                  </span>
+                </Tooltip>
+              </Row>
+              <Divider />
+
+              {/* Different trigger types */}
+              <Row>
+                <Label>Triggers</Label>
+                <Tooltip content="Agregar nuevo producto">
+                  <IconTrigger type="button" aria-label="Agregar">
+                    <Icon name="add_circle" size={20} />
+                  </IconTrigger>
+                </Tooltip>
+                <Tooltip content="Exportar datos a CSV">
+                  <IconTrigger type="button" aria-label="Exportar">
+                    <Icon name="download" size={20} />
+                  </IconTrigger>
+                </Tooltip>
+                <Tooltip content="Código SKU interno: PCM500-BOX-48" side="bottom">
+                  <TriggerText>PCM500</TriggerText>
+                </Tooltip>
+                <Tooltip content="Código de barras: 7702001450121" side="bottom">
+                  <TriggerText>7702001450121</TriggerText>
+                </Tooltip>
+              </Row>
+              <Divider />
+
+              {/* Delay & disabled */}
+              <Row>
+                <Label>Control</Label>
+                <Tooltip content="Sin demora — aparece al instante" delayDuration={0}>
+                  <Button variant="outline">Sin delay</Button>
+                </Tooltip>
+                <Tooltip content="Demora larga (1.2s)" delayDuration={1200}>
+                  <Button variant="outline">Demora larga</Button>
+                </Tooltip>
+                <Tooltip content="Sin flecha" arrow={false}>
+                  <Button variant="outline">Sin flecha</Button>
+                </Tooltip>
+                <Tooltip content="Este tooltip está desactivado" disabled>
+                  <Button variant="ghost">Desactivado</Button>
+                </Tooltip>
               </Row>
 
             </SectionCard>
