@@ -9,6 +9,7 @@ import { useToast } from "../components/common/Toast";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { Tooltip } from "../components/ui/Tooltip";
+import { Pagination } from "../components/ui/Pagination";
 import { Icon } from "../components/ui/Icon";
 import { Loader } from "../components/ui/Loader";
 import { Skeleton } from "../components/ui/Skeleton";
@@ -235,6 +236,10 @@ export default function Sales() {
   const [loadingDemo, setLoadingDemo] = useState(true);
   const [dismissedAlert, setDismissedAlert] = useState(false);
   const [removedTags, setRemovedTags] = useState<string[]>([]);
+  const [pg1, setPg1] = useState(5);
+  const [pg2, setPg2] = useState(47);
+  const [pg3, setPg3] = useState(3);
+  const [pgSize, setPgSize] = useState(10);
 
   const [drawerRightOpen, setDrawerRightOpen] = useState(false);
   const [drawerLeftOpen, setDrawerLeftOpen] = useState(false);
@@ -688,6 +693,106 @@ export default function Sales() {
                 <Tooltip content="Este tooltip está desactivado" disabled>
                   <Button variant="ghost">Desactivado</Button>
                 </Tooltip>
+              </Row>
+
+            </SectionCard>
+          </Section>
+
+          {/* Pagination */}
+          <Section variants={fadeUp}>
+            <SectionTitle>Pagination</SectionTitle>
+            <SectionCard>
+
+              {/* Basic */}
+              <Row>
+                <Label>Básico</Label>
+                <Pagination page={pg1} totalPages={10} onPageChange={setPg1} />
+              </Row>
+              <Divider />
+
+              {/* Large dataset — ellipsis both sides */}
+              <Row>
+                <Label>Grande</Label>
+                <Pagination page={pg2} totalPages={100} onPageChange={setPg2} />
+              </Row>
+              <Divider />
+
+              {/* Full widget — info + sizer + pages */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                <Label>Completo</Label>
+                <Pagination
+                  page={pg3}
+                  totalPages={Math.ceil(247 / pgSize)}
+                  onPageChange={setPg3}
+                  totalItems={247}
+                  pageSize={pgSize}
+                  onPageSizeChange={(s) => { setPgSize(s); setPg3(1); }}
+                />
+              </div>
+              <Divider />
+
+              {/* Sizes */}
+              <Row>
+                <Label>sm</Label>
+                <Pagination page={3} totalPages={12} onPageChange={() => {}} size="sm" />
+              </Row>
+              <Row>
+                <Label>md</Label>
+                <Pagination page={3} totalPages={12} onPageChange={() => {}} size="md" />
+              </Row>
+              <Row>
+                <Label>lg</Label>
+                <Pagination page={3} totalPages={12} onPageChange={() => {}} size="lg" />
+              </Row>
+              <Divider />
+
+              {/* Wide sibling window */}
+              <Row>
+                <Label>siblingCount 2</Label>
+                <Pagination
+                  page={pg2}
+                  totalPages={100}
+                  onPageChange={setPg2}
+                  siblingCount={2}
+                  boundaryCount={2}
+                />
+              </Row>
+              <Divider />
+
+              {/* No first/last + sub-components composed */}
+              <Row>
+                <Label>Sin primero/último</Label>
+                <Pagination
+                  page={pg1}
+                  totalPages={10}
+                  onPageChange={setPg1}
+                  showFirstLast={false}
+                />
+              </Row>
+              <Divider />
+
+              {/* Composable sub-components */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                <Label>Sub-componentes</Label>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "2rem",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <Pagination.Info page={pg3} pageSize={pgSize} totalItems={247} />
+                  <Pagination.Sizer pageSize={pgSize} onChange={(s) => { setPgSize(s); setPg3(1); }} />
+                  <Pagination.Pages page={pg3} totalPages={Math.ceil(247 / pgSize)} onPageChange={setPg3} />
+                </div>
+              </div>
+              <Divider />
+
+              {/* Disabled */}
+              <Row>
+                <Label>Disabled</Label>
+                <Pagination page={3} totalPages={10} onPageChange={() => {}} disabled />
               </Row>
 
             </SectionCard>
