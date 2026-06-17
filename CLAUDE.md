@@ -18,7 +18,7 @@ No test framework is configured.
 
 "PharmaCore" — a React 19 + TypeScript + Vite pharmacy-management dashboard SPA. UI copy is in Spanish; code identifiers are in English. Entry flow: `index.html` → `src/main.tsx` → `src/App.tsx`.
 
-- **Routing** lives in `src/App.tsx` via `createBrowserRouter` (react-router-dom v7). `/` redirects to `/login`; routes are `/login`, `/dashboard`, `/inventory`. There is no auth guard — `Login` navigates to `/dashboard` on submit and `Sidebar` logout navigates back to `/login`.
+- **Routing** lives in `src/App.tsx` via `createBrowserRouter` (react-router-dom v7). `/` redirects to `/login`; routes are `/login`, `/dashboard`, `/inventory`, `/sales`. There is no auth guard — `Login` navigates to `/dashboard` on submit and `Sidebar` logout navigates back to `/login`. `/sales` is currently a component playground (WIP).
 - **Provider stack** (in `App.tsx`): styled-components `ThemeProvider` → `GlobalStyle` → `AppProvider` → `RouterProvider`.
 - **Pages** (`src/pages/`) compose the app. Authenticated pages wrap their content in `<PageShell>` (`src/components/layout/`), which renders `Sidebar` + `TopHeader` and animates route transitions with `AnimatePresence` keyed on `location.pathname`.
 - **Global state** is `src/context/AppContext.tsx` (`useApp` hook). Currently only a demo counter — this is the place to add real app-wide state.
@@ -38,7 +38,10 @@ Two styling systems coexist: **styled-components** (most existing components) an
 - **Animations**: framer-motion. Reusable `Variants` (`fadeUp`, `fadeIn`, `staggerContainer`, `slideInRight`) live in `src/lib/variants.ts` — reuse these rather than redefining inline. When combining `styled(motion.x)` with HTML attribute props, note `Button` (`src/components/ui/Button.tsx`) omits framer/HTML event-handler type conflicts via a `ConflictingEvents` Omit — mirror that approach.
 - **Forms**: react-hook-form + Zod via `@hookform/resolvers/zod`. See `src/pages/Login.tsx` — define a `z.object` schema, `z.infer` the field type, wire with `zodResolver`. Inputs use the `forwardRef` `FormInput` (`src/components/ui/`) which spreads `register()` and renders the error message.
 - **Icons**: Material Symbols (loaded via Google Fonts in `index.html`). Use the `Icon` component (`src/components/ui/Icon.tsx`) — `name` is the symbol ligature, `filled` toggles the fill axis, `size` is in px (converted to rem internally).
-- **Reusable UI** is in `src/components/ui/`, dashboard widgets in `src/components/dashboard/`, layout chrome in `src/components/layout/`.
+- **Reusable UI** splits across two directories. `src/components/ui/` holds the original components (styled-components or mixed). `src/components/common/` holds a newer Tailwind-only layer: `ButtonCustom`, `InputCustom`, `SelectCustom`, `CheckboxCustom`, `RadioCustom`, `RadioGroupCustom`. All `common/` components follow three conventions: a `Custom` name suffix, `forwardRef`, and a `dataCy` prop for test selectors. Dashboard widgets live in `src/components/dashboard/`, layout chrome in `src/components/layout/`.
+- **Modal** (`src/components/ui/Modal.tsx`) is built on `@radix-ui/react-dialog` + framer-motion + styled-components. Props: `open`, `onClose`, `title`, `description`, `size` (`sm`/`md`/`lg`/`xl`), `hideClose`, `preventClose`. Use `<Modal.Footer>` for the action row.
+- **`cn()` utility** (`src/lib/utils.ts`) wraps clsx + tailwind-merge. Use it to merge conditional Tailwind classes instead of string concatenation.
+- **Path alias**: `@/` resolves to `src/` (configured in `vite.config.ts` and `tsconfig`). Prefer `@/lib/utils`, `@/components/...`, etc. over relative paths that cross directory boundaries.
 
 Note: `src/Common.tsx` and `src/App.css` are leftovers from the Vite starter and are not imported anywhere.
 
