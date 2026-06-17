@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Sidebar } from "./Sidebar";
 import { TopHeader } from "./TopHeader";
 import { useIsMobile } from "../../lib/useMediaQuery";
+import { clearLocalStorage } from "../../utilities/local-storage-manager";
 
 const Layout = styled.div`
   display: flex;
@@ -52,7 +53,7 @@ export function PageShell({ children }: PageShellProps) {
   return (
     <Layout>
       <Sidebar
-        onLogout={() => navigate("/login")}
+        onLogout={() => { clearLocalStorage(); navigate("/login"); }}
         isMobile={isMobile}
         mobileOpen={drawerOpen}
         onClose={() => setMobileNavOpen(false)}

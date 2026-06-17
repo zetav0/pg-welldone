@@ -4,9 +4,32 @@ import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useState } from "react";
 import { useApp } from "../context/AppContext";
 import { Icon } from "../components/ui/Icon";
 import { FormInput } from "../components/ui/FormInput";
+import { useToast } from "../components/common/Toast";
+import { RestApi } from "../services/restApi";
+import { saveInLocalStorage, LocalStorageKeys } from "../utilities/local-storage-manager";
+
+
+/* ── API types ───────────────────────────────────────── */
+
+interface LoginUser {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  company_id: number | null;
+  permissions: string[];
+}
+
+interface LoginResponse {
+  message: string;
+  user: LoginUser;
+  access_token: string;
+  token_type: string;
+}
 
 /* ── Validation schema ──────────────────────────────── */
 
@@ -161,18 +184,43 @@ const PageFooter = styled.p`
 export default function Login() {
   const navigate = useNavigate();
   const { count } = useApp();
+  const { toast } = useToast();
+
+  const [loading, setLoading] = useState(false);
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LoginFields>({
     resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email:    "admin@sistema-sunat.com",
+      password: "Admin123!@#",
+    },
   });
 
-  function onSubmit(_data: LoginFields) {
-    console.log(_data);
-    navigate("/dashboard");
+  function onSubmit(data: LoginFields) {
+    setLoading(true);
+    RestApi.post<LoginResponse>("/api/auth/login", {
+      email:      data.email,
+      password:   data.password,
+      token_name: "API Access Token",
+      abilities:  ["*"],
+    }).subscribe({
+      next: (response) => {
+        if (response?.access_token) {
+          saveInLocalStorage(LocalStorageKeys.TOKEN, response.access_token);
+        }
+        navigate("/dashboard");
+      },
+      error: (error: unknown) => {
+        setLoading(false);
+        const message =
+          error instanceof Error ? error.message : "Error al conectar con el servidor";
+        toast({ variant: "error", title: "Error de autenticación", description: message });
+      },
+    });
   }
 
   return (
@@ -232,14 +280,15 @@ export default function Login() {
                   {...register("password")}
                 />
 
-                <SubmitButton type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Verificando…" : "Ingresar al sistema"}
+                <SubmitButton type="submit" disabled={loading}>
+                  {loading ? "Verificando…" : "Ingresar al sistema"}
                 </SubmitButton>
               </Form>
             </Card>
           </motion.div>
 
           <PageFooter>PharmaCore v2.4.0-Stable • Acceso restringido</PageFooter>
+
         </Container>
       </motion.div>
     </Page>
