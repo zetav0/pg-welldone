@@ -15,8 +15,8 @@ import { Icon } from "../components/ui/Icon";
 import { Pagination } from "../components/ui/Pagination";
 import { Drawer } from "../components/common/Drawer";
 import { useToast } from "../components/common/Toast";
-import { ComboboxCustom } from "../components/common/Combobox";
-import type { ComboboxOption } from "../components/common/Combobox";
+import { SearchSelectCustom } from "../components/common/SearchSelect";
+import type { SearchSelectOption } from "../components/common/SearchSelect";
 import { getDepartamentos, getProvincias, getDistritos } from "../data/ubigeo";
 import { useApp } from "@/context/AppContext";
 import { useCompany } from "@/context/CompanyContext";
@@ -725,21 +725,21 @@ export default function Customers() {
   const watchedProv    = watch("provincia");
 
   /* ── Ubigeo cascading options ── */
-  const depOptions = useMemo<ComboboxOption[]>(
+  const depOptions = useMemo<SearchSelectOption[]>(
     () => getDepartamentos().map((d) => ({ id: d, title: d })),
     []
   );
-  const provOptions = useMemo<ComboboxOption[]>(
+  const provOptions = useMemo<SearchSelectOption[]>(
     () => (watchedDep ? getProvincias(watchedDep).map((p) => ({ id: p, title: p })) : []),
     [watchedDep]
   );
-  const distOptions = useMemo<ComboboxOption[]>(
+  const distOptions = useMemo<SearchSelectOption[]>(
     () => (watchedDep && watchedProv ? getDistritos(watchedDep, watchedProv).map((d) => ({ id: d, title: d })) : []),
     [watchedDep, watchedProv]
   );
 
   /* ── Company options ── */
-  const companyOptions = useMemo<ComboboxOption[]>(
+  const companyOptions = useMemo<SearchSelectOption[]>(
     () => companies.map((c) => ({ id: String(c.id), title: `${c.razon_social}  ·  ${c.ruc}` })),
     [companies]
   );
@@ -972,7 +972,7 @@ export default function Customers() {
 
             <FormGroup>
               <FormLabel>Empresa emisora</FormLabel>
-              <ComboboxCustom
+              <SearchSelectCustom
                 options={companyOptions}
                 value={activeCompanyId ? String(activeCompanyId) : null}
                 onChange={(val) => setActiveCompanyId(Number(val))}
@@ -1103,7 +1103,7 @@ export default function Customers() {
                 name="departamento"
                 control={control}
                 render={({ field }) => (
-                  <ComboboxCustom
+                  <SearchSelectCustom
                     options={depOptions}
                     value={field.value || null}
                     onChange={(val) => {
@@ -1127,7 +1127,7 @@ export default function Customers() {
                   name="provincia"
                   control={control}
                   render={({ field }) => (
-                    <ComboboxCustom
+                    <SearchSelectCustom
                       options={provOptions}
                       value={field.value || null}
                       onChange={(val) => {
@@ -1149,7 +1149,7 @@ export default function Customers() {
                   name="distrito"
                   control={control}
                   render={({ field }) => (
-                    <ComboboxCustom
+                    <SearchSelectCustom
                       options={distOptions}
                       value={field.value || null}
                       onChange={field.onChange}
