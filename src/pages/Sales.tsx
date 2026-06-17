@@ -6,6 +6,7 @@ import { PageShell } from "../components/layout/PageShell";
 import { Modal } from "../components/ui/Modal";
 import { Drawer } from "../components/common/Drawer";
 import { useToast } from "../components/common/Toast";
+import { Breadcrumb } from "../components/common/Breadcrumb";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { Tooltip } from "../components/ui/Tooltip";
@@ -27,6 +28,35 @@ const ContentArea = styled.div`
   flex-direction: column;
   gap: 3.2rem;
   flex: 1;
+
+  @media (max-width: 640px) {
+    padding: 1.6rem;
+    gap: 2.4rem;
+  }
+`;
+
+/* Responsive grids — collapse columns as the viewport narrows. */
+const FourColGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.6rem;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const TwoColGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.6rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const PageHeading = styled.div`
@@ -181,6 +211,10 @@ const SkeletonTwoCol = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: 1.6rem;
   width: 100%;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const SkeletonFourGrid = styled.div`
@@ -188,6 +222,13 @@ const SkeletonFourGrid = styled.div`
   grid-template-columns: repeat(4, 1fr);
   gap: 1.6rem;
   width: 100%;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const DemoCard = styled.div`
@@ -272,6 +313,93 @@ export default function Sales() {
           animate="visible"
           style={{ display: "flex", flexDirection: "column", gap: "3.2rem" }}
         >
+          {/* Breadcrumb */}
+          <Section variants={fadeUp}>
+            <SectionTitle>Breadcrumb</SectionTitle>
+            <SectionCard>
+              {/* Básico — navegación con onClick (preventDefault evita salir de la SPA) */}
+              <Row style={{ alignItems: "flex-start", flexDirection: "column", gap: "0.8rem" }}>
+                <Label>Básico</Label>
+                <Breadcrumb
+                  items={[
+                    {
+                      label: "Inicio",
+                      href: "/dashboard",
+                      onClick: (e) => {
+                        e.preventDefault();
+                        toast({ variant: "info", title: "Ir a Inicio" });
+                      },
+                    },
+                    {
+                      label: "Inventario",
+                      href: "/inventory",
+                      onClick: (e) => {
+                        e.preventDefault();
+                        toast({ variant: "info", title: "Ir a Inventario" });
+                      },
+                    },
+                    { label: "Paracetamol 500mg" },
+                  ]}
+                />
+              </Row>
+
+              <Divider />
+
+              {/* Con íconos */}
+              <Row style={{ alignItems: "flex-start", flexDirection: "column", gap: "0.8rem" }}>
+                <Label>Con íconos</Label>
+                <Breadcrumb
+                  items={[
+                    { label: "Inicio", href: "#", icon: "home", onClick: (e) => e.preventDefault() },
+                    {
+                      label: "Ventas",
+                      href: "#",
+                      icon: "point_of_sale",
+                      onClick: (e) => e.preventDefault(),
+                    },
+                    { label: "Detalle", icon: "receipt_long" },
+                  ]}
+                />
+              </Row>
+
+              <Divider />
+
+              {/* Separador personalizado */}
+              <Row style={{ alignItems: "flex-start", flexDirection: "column", gap: "0.8rem" }}>
+                <Label>Separador "/"</Label>
+                <Breadcrumb
+                  separator={
+                    <span style={{ color: "#64748b", padding: "0 0.2rem" }}>/</span>
+                  }
+                  items={[
+                    { label: "Inicio", href: "#", onClick: (e) => e.preventDefault() },
+                    { label: "Catálogo", href: "#", onClick: (e) => e.preventDefault() },
+                    { label: "Antibióticos", href: "#", onClick: (e) => e.preventDefault() },
+                    { label: "Amoxicilina" },
+                  ]}
+                />
+              </Row>
+
+              <Divider />
+
+              {/* Colapsado — rutas largas (maxItems) */}
+              <Row style={{ alignItems: "flex-start", flexDirection: "column", gap: "0.8rem" }}>
+                <Label>Colapsado (maxItems=3)</Label>
+                <Breadcrumb
+                  maxItems={3}
+                  items={[
+                    { label: "Inicio", href: "#", onClick: (e) => e.preventDefault() },
+                    { label: "Inventario", href: "#", onClick: (e) => e.preventDefault() },
+                    { label: "Categorías", href: "#", onClick: (e) => e.preventDefault() },
+                    { label: "Analgésicos", href: "#", onClick: (e) => e.preventDefault() },
+                    { label: "Ibuprofeno", href: "#", onClick: (e) => e.preventDefault() },
+                    { label: "Lote A-2291" },
+                  ]}
+                />
+              </Row>
+            </SectionCard>
+          </Section>
+
           {/* Modales */}
           <Section variants={fadeUp}>
             <SectionTitle>Modal</SectionTitle>
@@ -995,7 +1123,7 @@ export default function Sales() {
             </Card>
 
             {/* StatCard */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "1.6rem" }}>
+            <FourColGrid>
               <StatCard
                 icon="point_of_sale"
                 iconVariant="primary"
@@ -1028,10 +1156,10 @@ export default function Sales() {
                 delta={{ value: "sin cambio", direction: "flat" }}
                 badge={{ label: "Urgente", variant: "danger" }}
               />
-            </div>
+            </FourColGrid>
 
             {/* ProfileCard */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.6rem" }}>
+            <TwoColGrid>
               <ProfileCard
                 name="Dra. María López"
                 role="Farmacéutica Jefe"
@@ -1046,18 +1174,18 @@ export default function Sales() {
                 stats={[{ label: "Atendidos hoy", value: 18 }, { label: "Pendientes", value: 0 }]}
                 action={{ label: "Ver perfil completo", onClick: () => {} }}
               />
-            </div>
+            </TwoColGrid>
 
             {/* ActionCard grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "1.6rem" }}>
+            <FourColGrid>
               <ActionCard icon="add_shopping_cart" label="Nueva venta" description="Registrar transacción" onClick={() => {}} badge="Nuevo" variant="primary" />
               <ActionCard icon="inventory_2" label="Inventario" description="Gestionar stock" onClick={() => {}} />
               <ActionCard icon="receipt_long" label="Historial" description="Ver ventas pasadas" onClick={() => {}} />
               <ActionCard icon="local_shipping" label="Pedidos" description="Órdenes de reposición" onClick={() => {}} />
-            </div>
+            </FourColGrid>
 
             {/* Card compound */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.6rem" }}>
+            <TwoColGrid>
               <Card>
                 <Card.Header
                   title="Resumen semanal"
@@ -1107,7 +1235,7 @@ export default function Sales() {
                   </div>
                 </Card.Body>
               </Card>
-            </div>
+            </TwoColGrid>
           </Section>
 
           {/* Skeleton */}

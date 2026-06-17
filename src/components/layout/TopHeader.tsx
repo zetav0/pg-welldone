@@ -16,6 +16,31 @@ const Root = styled.header`
   justify-content: space-between;
   padding: 0 3.2rem;
   gap: 3.2rem;
+
+  @media (max-width: 768px) {
+    padding: 0 1.6rem;
+    gap: 1.2rem;
+  }
+`;
+
+const MenuButton = styled.button`
+  display: none;
+  flex-shrink: 0;
+  padding: 0.8rem;
+  background: transparent;
+  border: none;
+  color: ${(p) => p.theme.colors.text};
+  cursor: pointer;
+  border-radius: 0.8rem;
+  align-items: center;
+
+  &:hover {
+    color: ${(p) => p.theme.colors.primary};
+  }
+
+  @media (max-width: 768px) {
+    display: flex;
+  }
 `;
 
 const SearchWrapper = styled.div`
@@ -58,6 +83,10 @@ const RightSection = styled.div`
   align-items: center;
   gap: 2.4rem;
   flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    gap: 1.2rem;
+  }
 `;
 
 const IconButtonGroup = styled.div`
@@ -108,6 +137,10 @@ const UserArea = styled.div`
 
 const UserInfo = styled.div`
   text-align: right;
+
+  @media (max-width: 640px) {
+    display: none;
+  }
 `;
 
 const UserName = styled.p`
@@ -140,9 +173,19 @@ const Avatar = styled.div`
 
 /* ── Component ──────────────────────────────────────── */
 
-export function TopHeader() {
+interface TopHeaderProps {
+  onMenuClick?: () => void;
+  showMenuButton?: boolean;
+}
+
+export function TopHeader({ onMenuClick, showMenuButton }: TopHeaderProps) {
   return (
     <Root>
+      {showMenuButton && (
+        <MenuButton onClick={onMenuClick} aria-label="Abrir menú" title="Menú">
+          <Icon name="menu" size={24} />
+        </MenuButton>
+      )}
       <SearchWrapper>
         <SearchIcon>
           <Icon name="search" size={18} />

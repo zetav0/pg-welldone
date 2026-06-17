@@ -14,6 +14,11 @@ const ContentArea = styled.div`
   flex-direction: column;
   gap: 3.2rem;
   flex: 1;
+
+  @media (max-width: 640px) {
+    padding: 1.6rem;
+    gap: 2.4rem;
+  }
 `;
 
 /* ── Page heading ───────────────────────────────────── */
@@ -124,12 +129,23 @@ const PageFooter = styled.footer`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+
+  @media (max-width: 640px) {
+    padding: 1.6rem;
+  }
 `;
 
 const FooterLeft = styled.div`
   display: flex;
   align-items: center;
   gap: 2.4rem;
+  flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    gap: 1.2rem;
+  }
 `;
 
 const FooterItem = styled.div`
