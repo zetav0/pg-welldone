@@ -24,6 +24,11 @@ const ContentArea = styled.div`
   flex-direction: column;
   gap: 2.4rem;
   flex: 1;
+
+  @media (max-width: 640px) {
+    padding: 1.6rem;
+    gap: 1.6rem;
+  }
 `;
 
 /* ── Stats ──────────────────────────────────────────── */
@@ -155,6 +160,16 @@ const ContentRow = styled.div`
   display: flex;
   gap: 2.4rem;
   align-items: flex-start;
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+  }
+`;
+
+/* Horizontal scroll wrapper so the wide table never overflows the viewport. */
+const TableScroll = styled.div`
+  width: 100%;
+  overflow-x: auto;
 `;
 
 /* ── Product table ──────────────────────────────────── */
@@ -171,6 +186,7 @@ const TableCard = styled.div`
 
 const Table = styled.table`
   width: 100%;
+  min-width: 56rem;
   text-align: left;
   border-collapse: collapse;
 `;
@@ -367,6 +383,11 @@ const EditPanel = styled(motion.aside)`
   overflow: hidden;
   position: sticky;
   top: 1.6rem;
+
+  @media (max-width: 1024px) {
+    width: 100%;
+    position: static;
+  }
 `;
 
 const EditPanelHeader = styled.div`
@@ -645,8 +666,9 @@ export default function Inventory() {
         <ContentRow>
           {/* Product table */}
           <TableCard>
-            <Table>
-              <Thead>
+            <TableScroll>
+              <Table>
+                <Thead>
                 <tr>
                   <Th>Product Name</Th>
                   <Th>SKU / ID</Th>
@@ -701,7 +723,8 @@ export default function Inventory() {
                   </TableRow>
                 ))}
               </Tbody>
-            </Table>
+              </Table>
+            </TableScroll>
             <TableFooter>
               <FooterInfo>Showing {visibleProducts.length} of 1,248 products</FooterInfo>
               <PageBtns>

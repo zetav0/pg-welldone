@@ -1,6 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Icon } from "../ui/Icon";
 import { Button } from "../ui/Button";
@@ -12,18 +12,42 @@ import { RadioGroupCustom } from "../common/Radio";
 
 /* ── Styled components ──────────────────────────────── */
 
-const Root = styled.aside<{ $collapsed: boolean }>`
-  width: ${(p) => (p.$collapsed ? "6.4rem" : "25.6rem")};
+const Root = styled.aside<{ $collapsed: boolean; $isMobile: boolean; $mobileOpen: boolean }>`
+  width: ${(p) => (p.$isMobile ? "26rem" : p.$collapsed ? "6.4rem" : "25.6rem")};
   border-right: 1px solid ${(p) => p.theme.colors.border};
   display: flex;
   flex-direction: column;
   height: 100vh;
-  position: sticky;
-  top: 0;
   background: ${(p) => p.theme.colors.background};
   flex-shrink: 0;
   overflow: hidden;
-  transition: width 0.25s ease;
+  transition:
+    width 0.25s ease,
+    transform 0.25s ease;
+
+  ${(p) =>
+    p.$isMobile
+      ? `
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 60;
+    max-width: 85vw;
+    transform: translateX(${p.$mobileOpen ? "0" : "-100%"});
+    box-shadow: ${p.$mobileOpen ? "0 25px 50px -12px rgba(0,0,0,0.6)" : "none"};
+  `
+      : `
+    position: sticky;
+    top: 0;
+  `}
+`;
+
+const Backdrop = styled(motion.div)`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 50;
+  backdrop-filter: blur(2px);
 `;
 
 const LogoArea = styled.div<{ $collapsed: boolean }>`
@@ -192,14 +216,29 @@ const LogoutIconButton = styled.button`
 
 interface SidebarProps {
   onLogout: () => void;
+  /** When true the sidebar renders as an off-canvas overlay (mobile). */
+  isMobile?: boolean;
+  /** Whether the off-canvas drawer is open (only relevant on mobile). */
+  mobileOpen?: boolean;
+  /** Close the off-canvas drawer (mobile). */
+  onClose?: () => void;
 }
 
-export function Sidebar({ onLogout }: SidebarProps) {
+export function Sidebar({ onLogout, isMobile = false, mobileOpen = false, onClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(() => window.innerWidth < 1024);
   const navigate = useNavigate();
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
+
+  // On mobile the drawer is always expanded; collapsing only applies on desktop.
+  const isCollapsed = isMobile ? false : collapsed;
+
+  // Navigate then close the drawer when in mobile overlay mode.
+  const go = (path: string) => {
+    if (path !== "#") navigate(path);
+    if (isMobile) onClose?.();
+  };
 
   const categorias = [
     { id: "antibioticos", title: "Antibióticos" },
@@ -207,71 +246,86 @@ export function Sidebar({ onLogout }: SidebarProps) {
   ];
 
   return (
-    <Root $collapsed={collapsed}>
-      <LogoArea $collapsed={collapsed}>
-        <LogoIcon whileHover={{ rotate: 5, scale: 1.08 }} transition={{ duration: 0.2 }}>
-          <Icon name="medical_services" filled size={20} />
-        </LogoIcon>
-        <LogoTextWrapper $collapsed={collapsed}>
-          <AppName>PharmaCore</AppName>
-          <AppSub>Central Hub</AppSub>
-        </LogoTextWrapper>
-      </LogoArea>
+    <>
+      <AnimatePresence>
+        {isMobile && mobileOpen && (
+          <Backdrop
+            onClick={onClose}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          />
+        )}
+      </AnimatePresence>
 
-      <Nav>
-        <NavItem
-          $active={isActive("/dashboard")}
-          $collapsed={collapsed}
-          onClick={() => navigate("/dashboard")}
-          title="Dashboard"
-          whileHover={{ x: 3 }}
-          whileTap={{ scale: 0.97 }}
-          transition={{ duration: 0.15 }}
-        >
-          <Icon name="dashboard" size={20} />
-          <NavLabel $collapsed={collapsed}>Dashboard</NavLabel>
-        </NavItem>
+      <Root $collapsed={isCollapsed} $isMobile={isMobile} $mobileOpen={mobileOpen}>
+        <LogoArea $collapsed={isCollapsed}>
+          <LogoIcon whileHover={{ rotate: 5, scale: 1.08 }} transition={{ duration: 0.2 }}>
+            <Icon name="medical_services" filled size={20} />
+          </LogoIcon>
+          <LogoTextWrapper $collapsed={isCollapsed}>
+            <AppName>PharmaCore</AppName>
+            <AppSub>Central Hub</AppSub>
+          </LogoTextWrapper>
+        </LogoArea>
 
-        {sidebarNavItems.map((item) => (
+        <Nav>
           <NavItem
-            key={item.label}
-            $active={isActive(item.path)}
-            $collapsed={collapsed}
-            onClick={() => item.path !== "#" && navigate(item.path)}
-            title={item.label}
+            $active={isActive("/dashboard")}
+            $collapsed={isCollapsed}
+            onClick={() => go("/dashboard")}
+            title="Dashboard"
             whileHover={{ x: 3 }}
             whileTap={{ scale: 0.97 }}
             transition={{ duration: 0.15 }}
           >
-            <Icon name={item.icon} size={20} />
-            <NavLabel $collapsed={collapsed}>{item.label}</NavLabel>
+            <Icon name="dashboard" size={20} />
+            <NavLabel $collapsed={isCollapsed}>Dashboard</NavLabel>
           </NavItem>
-        ))}
 
-        <SectionLabel $collapsed={collapsed}>System</SectionLabel>
+          {sidebarNavItems.map((item) => (
+            <NavItem
+              key={item.label}
+              $active={isActive(item.path)}
+              $collapsed={isCollapsed}
+              onClick={() => go(item.path)}
+              title={item.label}
+              whileHover={{ x: 3 }}
+              whileTap={{ scale: 0.97 }}
+              transition={{ duration: 0.15 }}
+            >
+              <Icon name={item.icon} size={20} />
+              <NavLabel $collapsed={isCollapsed}>{item.label}</NavLabel>
+            </NavItem>
+          ))}
 
-        <NavItem
-          $active={isActive("/settings")}
-          $collapsed={collapsed}
-          onClick={() => navigate("/settings")}
-          title="Settings"
-          whileHover={{ x: 3 }}
-          whileTap={{ scale: 0.97 }}
-          transition={{ duration: 0.15 }}
-        >
-          <Icon name="settings" size={20} />
-          <NavLabel $collapsed={collapsed}>Settings</NavLabel>
-        </NavItem>
-      </Nav>
+          <SectionLabel $collapsed={isCollapsed}>System</SectionLabel>
 
-      <ToggleArea>
-        <ToggleButton
-          onClick={() => setCollapsed((c) => !c)}
-          title={collapsed ? "Expandir panel" : "Contraer panel"}
-        >
-          <Icon name={collapsed ? "chevron_right" : "chevron_left"} size={20} />
-        </ToggleButton>
-      </ToggleArea>
+          <NavItem
+            $active={isActive("/settings")}
+            $collapsed={isCollapsed}
+            onClick={() => go("/settings")}
+            title="Settings"
+            whileHover={{ x: 3 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+          >
+            <Icon name="settings" size={20} />
+            <NavLabel $collapsed={isCollapsed}>Settings</NavLabel>
+          </NavItem>
+        </Nav>
+
+        {!isMobile && (
+          <ToggleArea>
+            <ToggleButton
+              onClick={() => setCollapsed((c) => !c)}
+              title={collapsed ? "Expandir panel" : "Contraer panel"}
+            >
+              <Icon name={collapsed ? "chevron_right" : "chevron_left"} size={20} />
+            </ToggleButton>
+          </ToggleArea>
+        )}
 
       <Footer>
         <InputCustom
@@ -313,17 +367,18 @@ export function Sidebar({ onLogout }: SidebarProps) {
           required
         />
 
-        {collapsed ? (
-          <LogoutIconButton onClick={onLogout} title="Cerrar sesión">
-            <Icon name="logout" size={20} />
-          </LogoutIconButton>
-        ) : (
-          <Button variant="primary" fullWidth onClick={onLogout}>
-            <Icon name="logout" size={18} />
-            Cerrar sesión xd
-          </Button>
-        )}
-      </Footer>
-    </Root>
+          {isCollapsed ? (
+            <LogoutIconButton onClick={onLogout} title="Cerrar sesión">
+              <Icon name="logout" size={20} />
+            </LogoutIconButton>
+          ) : (
+            <Button variant="primary" fullWidth onClick={onLogout}>
+              <Icon name="logout" size={18} />
+              Cerrar sesión xd
+            </Button>
+          )}
+        </Footer>
+      </Root>
+    </>
   );
 }
