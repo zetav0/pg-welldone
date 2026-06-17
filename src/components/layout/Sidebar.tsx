@@ -229,7 +229,7 @@ export function Sidebar({ onLogout, isMobile = false, mobileOpen = false, onClos
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => path !== "#" && location.pathname.startsWith(path);
 
   // On mobile the drawer is always expanded; collapsing only applies on desktop.
   const isCollapsed = isMobile ? false : collapsed;
