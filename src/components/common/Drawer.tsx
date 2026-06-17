@@ -164,7 +164,13 @@ function Drawer({
 
             <DialogPrimitive.Content
               asChild
-              onPointerDownOutside={preventClose ? (e) => e.preventDefault() : undefined}
+              onPointerDownOutside={(e) => {
+                if ((e.target as HTMLElement).closest("[data-combobox-portal]")) {
+                  e.preventDefault();
+                  return;
+                }
+                if (preventClose) e.preventDefault();
+              }}
               onEscapeKeyDown={preventClose ? (e) => e.preventDefault() : undefined}
             >
               <Content

@@ -220,6 +220,7 @@ export const ComboboxCustom = forwardRef<HTMLButtonElement, ComboboxCustomProps>
           createPortal(
             <div
               ref={dropdownRef}
+              data-combobox-portal="true"
               style={{
                 position: "fixed",
                 top: pos.top,
