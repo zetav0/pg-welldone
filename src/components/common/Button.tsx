@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+﻿import { motion } from "framer-motion";
 import { Icon } from "../ui/Icon";
 
 export type ButtonVariant = "primary" | "outline" | "ghost" | "danger";
@@ -32,7 +32,7 @@ const sizeClasses: Record<ButtonSize, string> = {
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
     "bg-primary text-white border border-transparent " +
-    "shadow-[0_4px_6px_-1px_rgba(0,108,117,0.2)] enabled:hover:bg-primary/90",
+    "shadow-[0_4px_6px_-1px_rgba(113, 42, 226, 0.2)] enabled:hover:bg-primary/90",
   outline:
     "bg-transparent text-text-muted border border-border " +
     "enabled:hover:border-primary enabled:hover:text-primary",

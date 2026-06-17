@@ -1,4 +1,4 @@
-import styled, { css } from "styled-components";
+﻿import styled, { css } from "styled-components";
 import { motion } from "framer-motion";
 import { Icon } from "../ui/Icon";
 import { Badge, type BadgeVariant } from "../ui/Badge";
@@ -17,7 +17,7 @@ const CardRoot = styled(motion.div)<{ $dangerHover?: boolean }>`
   position: relative;
 
   &:hover {
-    border-color: ${(p) => (p.$dangerHover ? p.theme.colors.danger : "rgba(0,108,117,0.4)")};
+    border-color: ${(p) => (p.$dangerHover ? p.theme.colors.danger : "rgba(113, 42, 226, 0.4)")};
   }
 `;
 

@@ -1,7 +1,7 @@
-import styled from "styled-components";
+﻿import styled from "styled-components";
 import { motion } from "framer-motion";
 import { staggerContainer, fadeUp } from "../lib/variants";
-import { PageShell } from "../components/layout/PageShell";
+
 import { KpiCard } from "../components/dashboard/KpiCard";
 import { CounterCard } from "../components/dashboard/CounterCard";
 import { ExpirationsTable } from "../components/dashboard/ExpirationsTable";
@@ -14,6 +14,11 @@ const ContentArea = styled.div`
   flex-direction: column;
   gap: 3.2rem;
   flex: 1;
+
+  @media (max-width: 640px) {
+    padding: 1.6rem;
+    gap: 2.4rem;
+  }
 `;
 
 /* ── Page heading ───────────────────────────────────── */
@@ -77,7 +82,7 @@ const HealthButton = styled.button`
   transition: background 0.15s;
 
   &:hover {
-    background: rgba(0, 108, 117, 0.9);
+    background: rgba(113, 42, 226, 0.9);
   }
 `;
 
@@ -113,7 +118,7 @@ const MiniBar = styled.div<{ $h: number; $active?: boolean }>`
   flex: 1;
   height: ${(p) => p.$h}%;
   border-radius: 0.2rem 0.2rem 0 0;
-  background: ${(p) => (p.$active ? "rgba(0,108,117,0.5)" : p.theme.colors.chipBg)};
+  background: ${(p) => (p.$active ? "rgba(113, 42, 226, 0.5)" : p.theme.colors.chipBg)};
 `;
 
 /* ── Footer ─────────────────────────────────────────── */
@@ -124,12 +129,23 @@ const PageFooter = styled.footer`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+
+  @media (max-width: 640px) {
+    padding: 1.6rem;
+  }
 `;
 
 const FooterLeft = styled.div`
   display: flex;
   align-items: center;
   gap: 2.4rem;
+  flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    gap: 1.2rem;
+  }
 `;
 
 const FooterItem = styled.div`
@@ -180,7 +196,7 @@ const pendingNote = (
     style={{
       margin: 0,
       fontSize: "1.2rem",
-      color: "#64748b",
+      color: "#45464d",
       display: "flex",
       alignItems: "center",
       gap: "0.4rem",
@@ -195,7 +211,7 @@ const pendingNote = (
 
 const stockAlert = (
   <p
-    style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "#ef4444", cursor: "pointer" }}
+    style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "#ba1a1a", cursor: "pointer" }}
   >
     Review Critical Items →
   </p>
@@ -205,7 +221,7 @@ const stockAlert = (
 
 export default function Dashboard() {
   return (
-    <PageShell>
+    <>
       <ContentArea>
         <PageHeading>
           <HeadingText>
@@ -275,6 +291,6 @@ export default function Dashboard() {
         </FooterLeft>
         <FooterVersion>PharmaCore v2.4.0-Stable • Client ID: DWTN-882</FooterVersion>
       </PageFooter>
-    </PageShell>
+    </>
   );
 }

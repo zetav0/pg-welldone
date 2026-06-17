@@ -1,8 +1,11 @@
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Sidebar } from "./Sidebar";
 import { TopHeader } from "./TopHeader";
+import { useIsMobile } from "../../lib/useMediaQuery";
+import { useApp } from "../../context/AppContext";
 
 const Layout = styled.div`
   display: flex;
@@ -31,16 +34,37 @@ interface PageShellProps {
 export function PageShell({ children }: PageShellProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = useIsMobile();
+  const { logout } = useApp();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  // The drawer is only open while on mobile; navigation closes it via Sidebar's onClose.
+  const drawerOpen = isMobile && mobileNavOpen;
+
+  // Lock body scroll while the off-canvas drawer is open (external DOM sync).
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [drawerOpen]);
 
   return (
     <Layout>
-      <Sidebar onLogout={() => navigate("/login")} />
+      <Sidebar
+        onLogout={() => { logout(); navigate("/login"); }}
+        isMobile={isMobile}
+        mobileOpen={drawerOpen}
+        onClose={() => setMobileNavOpen(false)}
+      />
       <Main>
-        <TopHeader />
+        <TopHeader onMenuClick={() => setMobileNavOpen(true)} showMenuButton={isMobile} />
         <ScrollArea>
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
-              key={location.pathname}
+              key={"/" + location.pathname.split("/")[1]}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}

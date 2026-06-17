@@ -98,7 +98,7 @@ export const inventoryStats: InventoryStat[] = [
     trend: "-2%",
     trendType: "danger",
     icon: "warning",
-    iconColor: "#ef4444",
+    iconColor: "#ba1a1a",
     alert: "danger",
   },
   {
@@ -107,7 +107,7 @@ export const inventoryStats: InventoryStat[] = [
     trend: "-1%",
     trendType: "neutral",
     icon: "event_busy",
-    iconColor: "#eab308",
+    iconColor: "#b45309",
     alert: "warning",
   },
 ];

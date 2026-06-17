@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect, useRef } from "react";
+﻿import React, { forwardRef, useEffect, useRef } from "react";
 import { Icon } from "../ui/Icon";
 
 interface CheckboxCustomProps
@@ -56,7 +56,7 @@ export const CheckboxCustom = forwardRef<HTMLInputElement, CheckboxCustomProps>(
                 "transition-[background-color,border-color,box-shadow] duration-150",
                 "checked:bg-primary checked:border-primary",
                 "indeterminate:bg-primary indeterminate:border-primary",
-                "focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_rgba(0,108,117,0.12)]",
+                "focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_rgba(113, 42, 226, 0.12)]",
                 disabled ? "cursor-not-allowed" : "cursor-pointer",
                 className,
               ]

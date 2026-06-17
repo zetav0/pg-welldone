@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import styled, { css } from "styled-components";
 import { motion } from "framer-motion";
 import { Icon } from "./Icon";
@@ -51,7 +51,7 @@ const CardRoot = styled(motion.div)<{ $variant: CardVariant; $hover: boolean }>`
       cursor: pointer;
       transition: border-color 0.2s, box-shadow 0.2s;
       &:hover {
-        border-color: rgba(0, 108, 117, 0.35);
+        border-color: rgba(113, 42, 226, 0.35);
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
       }
     `}
@@ -348,11 +348,11 @@ export function StatCard({
 ═══════════════════════════════════════════════════════ */
 
 const AVATAR_PALETTES = [
-  { bg: "rgba(0,108,117,0.18)",   fg: "#006c75" },
-  { bg: "rgba(34,197,94,0.18)",   fg: "#22c55e" },
-  { bg: "rgba(234,179,8,0.18)",   fg: "#eab308" },
-  { bg: "rgba(99,102,241,0.18)",  fg: "#818cf8" },
-  { bg: "rgba(236,72,153,0.18)",  fg: "#f472b6" },
+  { bg: "rgba(113,42,226,0.12)",  fg: "#712ae2" },
+  { bg: "rgba(22,163,74,0.12)",   fg: "#16a34a" },
+  { bg: "rgba(180,83,9,0.12)",    fg: "#b45309" },
+  { bg: "rgba(99,102,241,0.12)",  fg: "#4f46e5" },
+  { bg: "rgba(236,72,153,0.12)",  fg: "#db2777" },
 ] as const;
 
 function avatarPalette(name: string) {
@@ -583,7 +583,7 @@ const ActionRoot = styled(motion.button)<{ $variant: ActionCardVariant }>`
       color: ${p.theme.colors.textMuted};
 
       &:hover {
-        border-color: rgba(0, 108, 117, 0.4);
+        border-color: rgba(113, 42, 226, 0.4);
         color: ${p.theme.colors.primary};
         background: ${p.theme.colors.primaryBg};
       }
@@ -593,12 +593,12 @@ const ActionRoot = styled(motion.button)<{ $variant: ActionCardVariant }>`
     p.$variant === "primary" &&
     css`
       background: ${p.theme.colors.primaryBg};
-      border: 1px solid rgba(0, 108, 117, 0.25);
+      border: 1px solid rgba(113, 42, 226, 0.25);
       color: ${p.theme.colors.primary};
 
       &:hover {
         background: ${p.theme.colors.primaryBgStrong};
-        border-color: rgba(0, 108, 117, 0.5);
+        border-color: rgba(113, 42, 226, 0.5);
       }
     `}
 `;
@@ -718,7 +718,7 @@ function alertBorder(v: AlertCardVariant): string {
     success: "rgba(34,197,94,0.2)",
     warning: "rgba(234,179,8,0.2)",
     danger: "rgba(239,68,68,0.2)",
-    info: "rgba(0,108,117,0.2)",
+    info: "rgba(113, 42, 226, 0.2)",
   }[v];
 }
 

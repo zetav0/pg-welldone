@@ -1,11 +1,12 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import styled from "styled-components";
 import { motion } from "framer-motion";
 import { staggerContainer, fadeUp } from "../lib/variants";
-import { PageShell } from "../components/layout/PageShell";
+
 import { Modal } from "../components/ui/Modal";
 import { Drawer } from "../components/common/Drawer";
 import { useToast } from "../components/common/Toast";
+import { Breadcrumb } from "../components/common/Breadcrumb";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { Tooltip } from "../components/ui/Tooltip";
@@ -27,6 +28,35 @@ const ContentArea = styled.div`
   flex-direction: column;
   gap: 3.2rem;
   flex: 1;
+
+  @media (max-width: 640px) {
+    padding: 1.6rem;
+    gap: 2.4rem;
+  }
+`;
+
+/* Responsive grids — collapse columns as the viewport narrows. */
+const FourColGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.6rem;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const TwoColGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.6rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const PageHeading = styled.div`
@@ -181,6 +211,10 @@ const SkeletonTwoCol = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: 1.6rem;
   width: 100%;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const SkeletonFourGrid = styled.div`
@@ -188,6 +222,13 @@ const SkeletonFourGrid = styled.div`
   grid-template-columns: repeat(4, 1fr);
   gap: 1.6rem;
   width: 100%;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const DemoCard = styled.div`
@@ -256,7 +297,7 @@ export default function Sales() {
   const { toast } = useToast();
 
   return (
-    <PageShell>
+    <>
       <ContentArea>
         <PageHeading>
           <div>
@@ -272,6 +313,93 @@ export default function Sales() {
           animate="visible"
           style={{ display: "flex", flexDirection: "column", gap: "3.2rem" }}
         >
+          {/* Breadcrumb */}
+          <Section variants={fadeUp}>
+            <SectionTitle>Breadcrumb</SectionTitle>
+            <SectionCard>
+              {/* Básico — navegación con onClick (preventDefault evita salir de la SPA) */}
+              <Row style={{ alignItems: "flex-start", flexDirection: "column", gap: "0.8rem" }}>
+                <Label>Básico</Label>
+                <Breadcrumb
+                  items={[
+                    {
+                      label: "Inicio",
+                      href: "/dashboard",
+                      onClick: (e) => {
+                        e.preventDefault();
+                        toast({ variant: "info", title: "Ir a Inicio" });
+                      },
+                    },
+                    {
+                      label: "Inventario",
+                      href: "/inventory",
+                      onClick: (e) => {
+                        e.preventDefault();
+                        toast({ variant: "info", title: "Ir a Inventario" });
+                      },
+                    },
+                    { label: "Paracetamol 500mg" },
+                  ]}
+                />
+              </Row>
+
+              <Divider />
+
+              {/* Con íconos */}
+              <Row style={{ alignItems: "flex-start", flexDirection: "column", gap: "0.8rem" }}>
+                <Label>Con íconos</Label>
+                <Breadcrumb
+                  items={[
+                    { label: "Inicio", href: "#", icon: "home", onClick: (e) => e.preventDefault() },
+                    {
+                      label: "Ventas",
+                      href: "#",
+                      icon: "point_of_sale",
+                      onClick: (e) => e.preventDefault(),
+                    },
+                    { label: "Detalle", icon: "receipt_long" },
+                  ]}
+                />
+              </Row>
+
+              <Divider />
+
+              {/* Separador personalizado */}
+              <Row style={{ alignItems: "flex-start", flexDirection: "column", gap: "0.8rem" }}>
+                <Label>Separador "/"</Label>
+                <Breadcrumb
+                  separator={
+                    <span style={{ color: "#64748b", padding: "0 0.2rem" }}>/</span>
+                  }
+                  items={[
+                    { label: "Inicio", href: "#", onClick: (e) => e.preventDefault() },
+                    { label: "Catálogo", href: "#", onClick: (e) => e.preventDefault() },
+                    { label: "Antibióticos", href: "#", onClick: (e) => e.preventDefault() },
+                    { label: "Amoxicilina" },
+                  ]}
+                />
+              </Row>
+
+              <Divider />
+
+              {/* Colapsado — rutas largas (maxItems) */}
+              <Row style={{ alignItems: "flex-start", flexDirection: "column", gap: "0.8rem" }}>
+                <Label>Colapsado (maxItems=3)</Label>
+                <Breadcrumb
+                  maxItems={3}
+                  items={[
+                    { label: "Inicio", href: "#", onClick: (e) => e.preventDefault() },
+                    { label: "Inventario", href: "#", onClick: (e) => e.preventDefault() },
+                    { label: "Categorías", href: "#", onClick: (e) => e.preventDefault() },
+                    { label: "Analgésicos", href: "#", onClick: (e) => e.preventDefault() },
+                    { label: "Ibuprofeno", href: "#", onClick: (e) => e.preventDefault() },
+                    { label: "Lote A-2291" },
+                  ]}
+                />
+              </Row>
+            </SectionCard>
+          </Section>
+
           {/* Modales */}
           <Section variants={fadeUp}>
             <SectionTitle>Modal</SectionTitle>
@@ -648,7 +776,7 @@ export default function Sales() {
                       title="Stock bajo"
                       description="23 productos bajo el mínimo recomendado"
                       footer={
-                        <span style={{ fontSize: "1.1rem", color: "#eab308" }}>
+                        <span style={{ fontSize: "1.1rem", color: "#b45309" }}>
                           Última revisión: hoy 08:30
                         </span>
                       }
@@ -823,7 +951,7 @@ export default function Sales() {
                   header: "SKU",
                   width: "10rem",
                   render: (r) => (
-                    <span style={{ fontFamily: "monospace", fontSize: "1.1rem", color: "#64748b" }}>
+                    <span style={{ fontFamily: "monospace", fontSize: "1.1rem", color: "#45464d" }}>
                       {r.sku}
                     </span>
                   ),
@@ -888,7 +1016,7 @@ export default function Sales() {
                       onSelectionChange={setTableSelected}
                     />
                     {tableSelected.size > 0 && (
-                      <span style={{ fontSize: "1.2rem", color: "#64748b" }}>
+                      <span style={{ fontSize: "1.2rem", color: "#45464d" }}>
                         {tableSelected.size} fila(s) seleccionada(s)
                       </span>
                     )}
@@ -995,7 +1123,7 @@ export default function Sales() {
             </Card>
 
             {/* StatCard */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "1.6rem" }}>
+            <FourColGrid>
               <StatCard
                 icon="point_of_sale"
                 iconVariant="primary"
@@ -1028,10 +1156,10 @@ export default function Sales() {
                 delta={{ value: "sin cambio", direction: "flat" }}
                 badge={{ label: "Urgente", variant: "danger" }}
               />
-            </div>
+            </FourColGrid>
 
             {/* ProfileCard */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.6rem" }}>
+            <TwoColGrid>
               <ProfileCard
                 name="Dra. María López"
                 role="Farmacéutica Jefe"
@@ -1046,18 +1174,18 @@ export default function Sales() {
                 stats={[{ label: "Atendidos hoy", value: 18 }, { label: "Pendientes", value: 0 }]}
                 action={{ label: "Ver perfil completo", onClick: () => {} }}
               />
-            </div>
+            </TwoColGrid>
 
             {/* ActionCard grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "1.6rem" }}>
+            <FourColGrid>
               <ActionCard icon="add_shopping_cart" label="Nueva venta" description="Registrar transacción" onClick={() => {}} badge="Nuevo" variant="primary" />
               <ActionCard icon="inventory_2" label="Inventario" description="Gestionar stock" onClick={() => {}} />
               <ActionCard icon="receipt_long" label="Historial" description="Ver ventas pasadas" onClick={() => {}} />
               <ActionCard icon="local_shipping" label="Pedidos" description="Órdenes de reposición" onClick={() => {}} />
-            </div>
+            </FourColGrid>
 
             {/* Card compound */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.6rem" }}>
+            <TwoColGrid>
               <Card>
                 <Card.Header
                   title="Resumen semanal"
@@ -1107,7 +1235,7 @@ export default function Sales() {
                   </div>
                 </Card.Body>
               </Card>
-            </div>
+            </TwoColGrid>
           </Section>
 
           {/* Skeleton */}
@@ -1207,7 +1335,7 @@ export default function Sales() {
                   <>
                     <DemoCard>
                       <DemoCardTop>
-                        <DemoIconBox $color="rgba(0,108,117,0.15)">
+                        <DemoIconBox $color="rgba(113, 42, 226, 0.15)">
                           <Icon name="medication" size={20} />
                         </DemoIconBox>
                         <Badge variant="primary">+12%</Badge>
@@ -1304,7 +1432,7 @@ export default function Sales() {
         description="Este es un modal simple sin formulario."
         size="sm"
       >
-        <p style={{ margin: 0, fontSize: "1.4rem", color: "#94a3b8", lineHeight: 1.6 }}>
+        <p style={{ margin: 0, fontSize: "1.4rem", color: "#76777d", lineHeight: 1.6 }}>
           Puedes poner cualquier contenido aquí — texto, listas, imágenes. El scroll funciona
           automáticamente si el contenido supera la altura de la pantalla.
         </p>
@@ -1370,7 +1498,7 @@ export default function Sales() {
           </Button>
           <Button
             onClick={() => setConfirmOpen(false)}
-            style={{ background: "#ef4444", boxShadow: "none" }}
+            style={{ background: "#ba1a1a", boxShadow: "none" }}
           >
             <Icon name="delete" size={16} />
             Sí, eliminar
@@ -1386,8 +1514,8 @@ export default function Sales() {
         description="Modal tamaño lg para contenido extenso"
         size="lg"
       >
-        <p style={{ margin: 0, fontSize: "1.4rem", color: "#94a3b8", lineHeight: 1.6 }}>
-          Este modal usa <strong style={{ color: "#f1f5f9" }}>size="lg"</strong> — ideal para
+        <p style={{ margin: 0, fontSize: "1.4rem", color: "#76777d", lineHeight: 1.6 }}>
+          Este modal usa <strong style={{ color: "#191c1e" }}>size="lg"</strong> — ideal para
           tablas, formularios complejos o vistas detalle. El ancho máximo es 72rem y el scroll
           vertical se activa automáticamente.
         </p>
@@ -1407,7 +1535,7 @@ export default function Sales() {
         title="Detalle de venta"
         description="Panel lateral deslizante desde la derecha"
       >
-        <p style={{ margin: 0, fontSize: "1.4rem", color: "#94a3b8", lineHeight: 1.6 }}>
+        <p style={{ margin: 0, fontSize: "1.4rem", color: "#76777d", lineHeight: 1.6 }}>
           El Drawer se desliza desde el lateral y es ideal para detalles, filtros o formularios
           secundarios sin perder el contexto de la página.
         </p>
@@ -1427,8 +1555,8 @@ export default function Sales() {
         title="Menú lateral"
         description={'side="left", size="sm"'}
       >
-        <p style={{ margin: 0, fontSize: "1.4rem", color: "#94a3b8", lineHeight: 1.6 }}>
-          Usa <strong style={{ color: "#f1f5f9" }}>side="left"</strong> para navegación o paneles
+        <p style={{ margin: 0, fontSize: "1.4rem", color: "#76777d", lineHeight: 1.6 }}>
+          Usa <strong style={{ color: "#191c1e" }}>side="left"</strong> para navegación o paneles
           contextuales que entran desde la izquierda.
         </p>
       </Drawer>
@@ -1466,6 +1594,6 @@ export default function Sales() {
           </Button>
         </Drawer.Footer>
       </Drawer>
-    </PageShell>
+    </>
   );
 }

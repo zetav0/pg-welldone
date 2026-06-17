@@ -4,9 +4,21 @@ import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useApp } from "../context/AppContext";
+import { useState } from "react";
+import { useApp, type AuthUser } from "../context/AppContext";
 import { Icon } from "../components/ui/Icon";
 import { FormInput } from "../components/ui/FormInput";
+import { useToast } from "../components/common/Toast";
+import { RestApi } from "../services/restApi";
+
+/* ── API types ───────────────────────────────────────── */
+
+interface LoginResponse {
+  message: string;
+  user: AuthUser;
+  access_token: string;
+  token_type: string;
+}
 
 /* ── Validation schema ──────────────────────────────── */
 
@@ -53,7 +65,7 @@ const LogoIcon = styled.div`
   align-items: center;
   justify-content: center;
   color: ${(p) => p.theme.colors.white};
-  box-shadow: 0 10px 15px -3px rgba(0, 108, 117, 0.3);
+  box-shadow: 0 10px 15px -3px ${(p) => p.theme.colors.primaryBgStrong};
 `;
 
 const AppName = styled.p`
@@ -79,7 +91,7 @@ const Card = styled.div`
   border-radius: 2rem;
   border: 1px solid ${(p) => p.theme.colors.border};
   padding: 3.2rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.1), 0 2px 8px -2px rgba(0, 0, 0, 0.06);
 `;
 
 const CardTitle = styled.h2`
@@ -134,7 +146,7 @@ const SubmitButton = styled.button`
   font-size: 1.4rem;
   cursor: pointer;
   font-family: inherit;
-  box-shadow: 0 10px 15px -3px rgba(0, 108, 117, 0.3);
+  box-shadow: 0 4px 14px -2px ${(p) => p.theme.colors.primaryBgStrong};
   transition:
     background 0.15s,
     opacity 0.15s;
@@ -145,14 +157,14 @@ const SubmitButton = styled.button`
   }
 
   &:not(:disabled):hover {
-    background: rgba(0, 108, 117, 0.9);
+    opacity: 0.88;
   }
 `;
 
 const PageFooter = styled.p`
   text-align: center;
   font-size: 1.2rem;
-  color: ${(p) => p.theme.colors.borderStrong};
+  color: ${(p) => p.theme.colors.textSubtle};
   margin: 2.4rem 0 0;
 `;
 
@@ -160,19 +172,42 @@ const PageFooter = styled.p`
 
 export default function Login() {
   const navigate = useNavigate();
-  const { count } = useApp();
+  const { count, login } = useApp();
+  const { toast } = useToast();
+
+  const [loading, setLoading] = useState(false);
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LoginFields>({
     resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email:    "admin@sistema-sunat.com",
+      password: "Admin123!@#",
+    },
   });
 
-  function onSubmit(_data: LoginFields) {
-    console.log(_data);
-    navigate("/dashboard");
+  function onSubmit(data: LoginFields) {
+    setLoading(true);
+    RestApi.post<LoginResponse>("/api/auth/login", {
+      email:      data.email,
+      password:   data.password,
+      token_name: "API Access Token",
+      abilities:  ["*"],
+    }).subscribe({
+      next: (response) => {
+        login(response.user, response.access_token);
+        navigate("/dashboard");
+      },
+      error: (error: unknown) => {
+        setLoading(false);
+        const message =
+          error instanceof Error ? error.message : "Error al conectar con el servidor";
+        toast({ variant: "error", title: "Error de autenticación", description: message });
+      },
+    });
   }
 
   return (
@@ -232,14 +267,15 @@ export default function Login() {
                   {...register("password")}
                 />
 
-                <SubmitButton type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Verificando…" : "Ingresar al sistema"}
+                <SubmitButton type="submit" disabled={loading}>
+                  {loading ? "Verificando…" : "Ingresar al sistema"}
                 </SubmitButton>
               </Form>
             </Card>
           </motion.div>
 
           <PageFooter>PharmaCore v2.4.0-Stable • Acceso restringido</PageFooter>
+
         </Container>
       </motion.div>
     </Page>

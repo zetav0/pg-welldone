@@ -1,12 +1,19 @@
 import styled from "styled-components";
 import { Icon } from "../ui/Icon";
+import { useApp } from "../../context/AppContext";
+
+function getInitials(name: string): string {
+  const words = name.trim().split(/\s+/);
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+}
 
 /* ── Styled components ──────────────────────────────── */
 
 const Root = styled.header`
   height: 6.4rem;
   border-bottom: 1px solid ${(p) => p.theme.colors.border};
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(247, 249, 251, 0.85);
   backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
@@ -16,6 +23,31 @@ const Root = styled.header`
   justify-content: space-between;
   padding: 0 3.2rem;
   gap: 3.2rem;
+
+  @media (max-width: 768px) {
+    padding: 0 1.6rem;
+    gap: 1.2rem;
+  }
+`;
+
+const MenuButton = styled.button`
+  display: none;
+  flex-shrink: 0;
+  padding: 0.8rem;
+  background: transparent;
+  border: none;
+  color: ${(p) => p.theme.colors.text};
+  cursor: pointer;
+  border-radius: 0.8rem;
+  align-items: center;
+
+  &:hover {
+    color: ${(p) => p.theme.colors.primary};
+  }
+
+  @media (max-width: 768px) {
+    display: flex;
+  }
 `;
 
 const SearchWrapper = styled.div`
@@ -58,6 +90,10 @@ const RightSection = styled.div`
   align-items: center;
   gap: 2.4rem;
   flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    gap: 1.2rem;
+  }
 `;
 
 const IconButtonGroup = styled.div`
@@ -108,6 +144,10 @@ const UserArea = styled.div`
 
 const UserInfo = styled.div`
   text-align: right;
+
+  @media (max-width: 640px) {
+    display: none;
+  }
 `;
 
 const UserName = styled.p`
@@ -140,9 +180,24 @@ const Avatar = styled.div`
 
 /* ── Component ──────────────────────────────────────── */
 
-export function TopHeader() {
+interface TopHeaderProps {
+  onMenuClick?: () => void;
+  showMenuButton?: boolean;
+}
+
+export function TopHeader({ onMenuClick, showMenuButton }: TopHeaderProps) {
+  const { user } = useApp();
+  const displayName = user?.name ?? "Usuario";
+  const displayRole = user?.role ?? "";
+  const initials = getInitials(displayName);
+
   return (
     <Root>
+      {showMenuButton && (
+        <MenuButton onClick={onMenuClick} aria-label="Abrir menú" title="Menú">
+          <Icon name="menu" size={24} />
+        </MenuButton>
+      )}
       <SearchWrapper>
         <SearchIcon>
           <Icon name="search" size={18} />
@@ -165,10 +220,10 @@ export function TopHeader() {
 
         <UserArea>
           <UserInfo>
-            <UserName>Dr. Sarah Chen</UserName>
-            <UserRole>Lead Pharmacist</UserRole>
+            <UserName>{displayName}</UserName>
+            <UserRole>{displayRole}</UserRole>
           </UserInfo>
-          <Avatar>SC</Avatar>
+          <Avatar>{initials}</Avatar>
         </UserArea>
       </RightSection>
     </Root>
