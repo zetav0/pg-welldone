@@ -12,7 +12,6 @@ import { Drawer } from "../../components/common/Drawer";
 import { Pagination } from "../../components/ui/Pagination";
 import { useToast } from "../../components/common/Toast";
 import { Tooltip } from "../../components/ui/Tooltip";
-import { Modal } from "../../components/ui/Modal";
 import { LineItemsEditor } from "../../components/invoicing/LineItemsEditor";
 import type { LineItem } from "../../components/invoicing/LineItemsEditor";
 
@@ -62,7 +61,7 @@ const PageSubtitle = styled.p`
   color: ${(p) => p.theme.colors.textMuted};
 `;
 
-/* ── KPI grid ────────────────────────────────────────── */
+/* ── KPI ─────────────────────────────────────────────── */
 
 const KpiGrid = styled(motion.div)`
   display: grid;
@@ -153,8 +152,6 @@ const TableIconBtn = styled.button`
   &:hover { background: ${(p) => p.theme.colors.chipBg}; }
 `;
 
-/* ── Filter bar ──────────────────────────────────────── */
-
 const FilterBar = styled.div`
   display: flex;
   align-items: center;
@@ -168,7 +165,7 @@ const SearchWrap = styled.div`
   position: relative;
   flex: 1;
   min-width: 18rem;
-  max-width: 30rem;
+  max-width: 32rem;
 `;
 
 const SearchIconEl = styled.span`
@@ -197,12 +194,6 @@ const SearchInput = styled.input`
   &::placeholder { color: ${(p) => p.theme.colors.textMuted}; }
 `;
 
-const FilterGroups = styled.div`
-  display: flex;
-  gap: 1.2rem;
-  flex-wrap: wrap;
-`;
-
 const ChipGroup = styled.div`
   display: flex;
   gap: 0.6rem;
@@ -222,10 +213,7 @@ const Chip = styled.button<{ $active?: boolean }>`
   white-space: nowrap;
   transition: border-color 0.15s, background 0.15s, color 0.15s;
 
-  &:hover {
-    border-color: ${(p) => p.theme.colors.primary};
-    color: ${(p) => p.theme.colors.primary};
-  }
+  &:hover { border-color: ${(p) => p.theme.colors.primary}; color: ${(p) => p.theme.colors.primary}; }
 `;
 
 const PaginationBar = styled.div`
@@ -239,7 +227,7 @@ const PaginationBar = styled.div`
   gap: 1.2rem;
 `;
 
-/* ── Table cell helpers ──────────────────────────────── */
+/* ── Cell helpers ────────────────────────────────────── */
 
 const SerieNum = styled.span`
   font-family: "Courier New", monospace;
@@ -261,7 +249,7 @@ const CellBold = styled.p`
   color: ${(p) => p.theme.colors.text};
 `;
 
-const AmountCell = styled.span`
+const MonoCell = styled.span`
   font-family: "Courier New", monospace;
   font-size: 1.3rem;
   font-weight: 700;
@@ -282,20 +270,10 @@ const RowBtn = styled.button`
   display: flex;
   color: ${(p) => p.theme.colors.textMuted};
   transition: background 0.15s, color 0.15s;
-  &:hover {
-    background: ${(p) => p.theme.colors.primaryBg};
-    color: ${(p) => p.theme.colors.primary};
-  }
+  &:hover { background: ${(p) => p.theme.colors.primaryBg}; color: ${(p) => p.theme.colors.primary}; }
 `;
 
-const DangerRowBtn = styled(RowBtn)`
-  &:hover {
-    background: rgba(220, 38, 38, 0.08);
-    color: ${(p) => p.theme.colors.danger};
-  }
-`;
-
-/* ── Drawer form helpers ─────────────────────────────── */
+/* ── Drawer form ─────────────────────────────────────── */
 
 const DrawerBody = styled.div`
   flex: 1;
@@ -309,7 +287,7 @@ const DrawerBody = styled.div`
 const FormSection = styled.section`
   display: flex;
   flex-direction: column;
-  gap: 1.4rem;
+  gap: 1.2rem;
 `;
 
 const SectionTitle = styled.h4`
@@ -369,60 +347,23 @@ const FieldSelect = styled.select`
   &:focus { border-color: ${(p) => p.theme.colors.primary}; }
 `;
 
-const FieldGrid2 = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.4rem;
-`;
-
-const RucRow = styled.div`
+const RefBox = styled.div`
   display: flex;
+  align-items: center;
   gap: 0.8rem;
-`;
-
-const SearchDocBtn = styled.button`
-  padding: 1rem 1.6rem;
-  background: ${(p) => p.theme.colors.primary};
-  color: ${(p) => p.theme.colors.white};
-  border: none;
-  border-radius: 0.8rem;
-  font-size: 1.3rem;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: inherit;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: opacity 0.15s;
-
-  &:hover { opacity: 0.88; }
-`;
-
-const TypeToggle = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
+  padding: 1rem 1.4rem;
+  background: ${(p) => p.theme.colors.chipBg};
   border: 1.5px solid ${(p) => p.theme.colors.border};
   border-radius: 0.8rem;
-  overflow: hidden;
 `;
 
-const TypeBtn = styled.button<{ $active?: boolean }>`
-  padding: 0.9rem 1.4rem;
-  background: ${(p) => p.$active ? p.theme.colors.primary : "transparent"};
-  color: ${(p) => p.$active ? p.theme.colors.white : p.theme.colors.textMuted};
-  border: none;
+const RefMono = styled.span`
+  font-family: "Courier New", monospace;
   font-size: 1.3rem;
   font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-
-  &:hover:not([data-active="true"]) {
-    background: ${(p) => p.theme.colors.chipBg};
-    color: ${(p) => p.theme.colors.text};
-  }
+  color: ${(p) => p.theme.colors.text};
+  flex: 1;
 `;
-
 
 const DrawerFooterRow = styled.div`
   display: flex;
@@ -513,161 +454,85 @@ const MonoValue = styled(ItemValue)`
   font-family: "Courier New", Courier, monospace;
 `;
 
-const TotalCard = styled.div`
-  background: ${(p) => p.theme.colors.primaryBg};
-  border: 1px solid ${(p) => p.theme.colors.primaryBgStrong};
-  border-radius: 1rem;
-  padding: 1.6rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-`;
-
-const TotalRow = styled.div`
-  display: flex;
-  justify-content: space-between;
+const ReasonPill = styled.span`
+  display: inline-flex;
   align-items: center;
-  font-size: 1.3rem;
-  color: ${(p) => p.theme.colors.textMuted};
-`;
-
-const TotalFinal = styled(TotalRow)`
-  font-size: 1.6rem;
-  font-weight: 900;
-  color: ${(p) => p.theme.colors.primary};
-  margin-top: 0.4rem;
-  padding-top: 0.8rem;
-  border-top: 1px solid ${(p) => p.theme.colors.primaryBgStrong};
-`;
-
-/* ── Confirm modal ───────────────────────────────────── */
-
-const ConfirmBody = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.6rem;
-`;
-
-const ConfirmDesc = styled.p`
-  margin: 0;
-  font-size: 1.4rem;
-  color: ${(p) => p.theme.colors.textMuted};
-  line-height: 1.6;
-`;
-
-const ConfirmRecord = styled.div`
-  background: ${(p) => p.theme.colors.chipBg};
-  border: 1px solid ${(p) => p.theme.colors.border};
-  border-radius: 1rem;
-  padding: 1.6rem;
-  display: flex;
-  flex-direction: column;
   gap: 0.5rem;
-`;
-
-const RecordId = styled.span`
-  font-family: "Courier New", Courier, monospace;
-  font-size: 1.4rem;
+  padding: 0.4rem 1rem;
+  border-radius: 10rem;
+  background: rgba(220, 150, 38, 0.1);
+  color: ${(p) => p.theme.colors.warning};
+  font-size: 1.2rem;
   font-weight: 700;
-  color: ${(p) => p.theme.colors.text};
-`;
-
-const RecordSub = styled.span`
-  font-size: 1.3rem;
-  color: ${(p) => p.theme.colors.textMuted};
-`;
-
-const ReasonLabel = styled.label`
-  font-size: 1.1rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: ${(p) => p.theme.colors.textMuted};
-  display: block;
-  margin-bottom: 0.6rem;
-`;
-
-const ReasonInput = styled.textarea`
-  width: 100%;
-  padding: 1rem 1.4rem;
-  background: ${(p) => p.theme.colors.inputBg};
-  border: 1.5px solid ${(p) => p.theme.colors.border};
-  border-radius: 0.8rem;
-  font-size: 1.3rem;
-  font-family: inherit;
-  color: ${(p) => p.theme.colors.text};
-  outline: none;
-  resize: vertical;
-  min-height: 6rem;
-  transition: border-color 0.15s;
-
-  &:focus { border-color: ${(p) => p.theme.colors.danger}; }
 `;
 
 /* ── Data ────────────────────────────────────────────── */
 
-type VoucherType   = "factura" | "boleta";
-type VoucherStatus = "accepted" | "pending" | "voided";
+type NoteStatus = "accepted" | "pending";
+type DebitReason = "intereses" | "cargo_adicional" | "diferencia_precio" | "otros";
 
-interface Voucher {
+interface DebitNote {
   id: string;
   serie: string;
-  type: VoucherType;
+  refVoucher: string;
   clientName: string;
   clientDoc: string;
-  issueDate: string;
+  date: string;
   amount: string;
-  igv: string;
-  total: string;
-  status: VoucherStatus;
+  reason: DebitReason;
+  status: NoteStatus;
 }
 
-const TYPE_LABEL: Record<VoucherType, string> = {
-  factura: "Factura Electrónica",
-  boleta:  "Boleta de Venta",
-};
-
-const STATUS_CFG: Record<VoucherStatus, { variant: BadgeVariant; label: string }> = {
+const STATUS_CFG: Record<NoteStatus, { variant: BadgeVariant; label: string }> = {
   accepted: { variant: "success", label: "ACEPTADO" },
   pending:  { variant: "warning", label: "PENDIENTE" },
-  voided:   { variant: "danger",  label: "ANULADO"   },
 };
 
-const TYPE_CHIPS: { value: VoucherType | "all"; label: string }[] = [
-  { value: "all",     label: "Todos"    },
-  { value: "factura", label: "Facturas" },
-  { value: "boleta",  label: "Boletas"  },
-];
+const REASON_LABEL: Record<DebitReason, string> = {
+  intereses:        "Intereses por mora",
+  cargo_adicional:  "Cargo adicional",
+  diferencia_precio:"Diferencia de precio",
+  otros:            "Otros cargos",
+};
 
-const STATUS_CHIPS: { value: VoucherStatus | "all"; label: string }[] = [
+const STATUS_CHIPS: { value: NoteStatus | "all"; label: string }[] = [
   { value: "all",      label: "Todos"     },
   { value: "accepted", label: "Aceptados" },
   { value: "pending",  label: "Pendientes"},
-  { value: "voided",   label: "Anulados"  },
 ];
 
-const VOUCHERS: Voucher[] = [
-  { id: "1", serie: "F001-00000892", type: "factura", clientName: "Constructora Alianza S.A.C.", clientDoc: "RUC 20556784912", issueDate: "14 Oct, 2024", amount: "S/ 10,550.85", igv: "S/ 1,899.15", total: "S/ 12,450.00", status: "accepted" },
-  { id: "2", serie: "B001-00001230", type: "boleta",  clientName: "María García López",           clientDoc: "DNI 45123789",    issueDate: "13 Oct, 2024", amount: "S/   271.19", igv: "S/    48.81", total: "S/    320.00", status: "accepted" },
-  { id: "3", serie: "F001-00000891", type: "factura", clientName: "Tech Solutions Peru S.A.C.",   clientDoc: "RUC 20512345678", issueDate: "12 Oct, 2024", amount: "S/ 20,338.98", igv: "S/ 3,661.02", total: "S/ 24,000.00", status: "pending"  },
-  { id: "4", serie: "F001-00000889", type: "factura", clientName: "Distribuidora Norte E.I.R.L.", clientDoc: "RUC 20448123992", issueDate: "08 Oct, 2024", amount: "S/  2,711.86", igv: "S/   488.14", total: "S/  3,200.00", status: "voided"   },
-  { id: "5", serie: "B001-00001228", type: "boleta",  clientName: "José Rodríguez Pinto",         clientDoc: "DNI 30456123",    issueDate: "05 Oct, 2024", amount: "S/    84.75", igv: "S/    15.25", total: "S/    100.00", status: "accepted" },
+const DEBIT_NOTES: DebitNote[] = [
+  { id: "1", serie: "FD01-00000009", refVoucher: "F001-00000882", clientName: "Tech Solutions Peru S.A.C.",      clientDoc: "RUC 20512345678", date: "16 Oct, 2024", amount: "S/ 1,180.00", reason: "intereses",        status: "accepted" },
+  { id: "2", serie: "FD01-00000008", refVoucher: "F001-00000879", clientName: "Farmacia San Martín E.I.R.L.",    clientDoc: "RUC 20388812401", date: "12 Oct, 2024", amount: "S/   350.00", reason: "cargo_adicional",  status: "accepted" },
+  { id: "3", serie: "FD01-00000007", refVoucher: "F001-00000876", clientName: "Clínica San Lucas S.A.",          clientDoc: "RUC 20456789012", date: "08 Oct, 2024", amount: "S/   820.00", reason: "diferencia_precio",status: "pending"  },
+  { id: "4", serie: "BD01-00000002", refVoucher: "B001-00001228", clientName: "José Rodríguez Pinto",            clientDoc: "DNI 30456123",    date: "03 Oct, 2024", amount: "S/    25.00", reason: "otros",            status: "accepted" },
 ];
 
 const PAGE_SIZE = 8;
 
 /* ── Columns ─────────────────────────────────────────── */
 
-function buildColumns(onAnular: (v: Voucher) => void): ColumnDef<Voucher>[] {
+function buildColumns(): ColumnDef<DebitNote>[] {
   return [
     {
       key: "serie",
       header: "Serie / Número",
-      minWidth: "16rem",
+      minWidth: "15rem",
       render: (r) => (
         <>
           <SerieNum>{r.serie}</SerieNum>
-          <CellSub style={{ marginTop: "0.2rem" }}>{TYPE_LABEL[r.type]}</CellSub>
+          <CellSub>Nota de Débito Electrónica</CellSub>
+        </>
+      ),
+    },
+    {
+      key: "refVoucher",
+      header: "Comp. Referencia",
+      minWidth: "15rem",
+      render: (r) => (
+        <>
+          <MonoCell>{r.refVoucher}</MonoCell>
+          <CellSub>Referencia</CellSub>
         </>
       ),
     },
@@ -682,18 +547,24 @@ function buildColumns(onAnular: (v: Voucher) => void): ColumnDef<Voucher>[] {
         </>
       ),
     },
-    { key: "issueDate", header: "Emisión", width: "12rem" },
+    { key: "date", header: "Fecha", width: "12rem" },
     {
-      key: "total",
-      header: "Total",
-      width: "12rem",
+      key: "amount",
+      header: "Monto Debitado",
+      width: "13rem",
       align: "right",
-      render: (r) => <AmountCell>{r.total}</AmountCell>,
+      render: (r) => <MonoCell style={{ color: "var(--color-warning)", fontWeight: 700 }}>+{r.amount}</MonoCell>,
+    },
+    {
+      key: "reason",
+      header: "Motivo",
+      width: "16rem",
+      render: (r) => <span style={{ fontSize: "1.3rem" }}>{REASON_LABEL[r.reason]}</span>,
     },
     {
       key: "status",
-      header: "Estado SUNAT",
-      width: "13rem",
+      header: "SUNAT",
+      width: "11rem",
       align: "center",
       render: (r) => {
         const cfg = STATUS_CFG[r.status];
@@ -702,28 +573,16 @@ function buildColumns(onAnular: (v: Voucher) => void): ColumnDef<Voucher>[] {
     },
     {
       key: "actions",
-      header: "Acciones",
-      width: "12rem",
+      header: "",
+      width: "8rem",
       align: "right",
-      render: (r) => (
+      render: () => (
         <ActionRow>
           <Tooltip content="Ver PDF" side="top">
             <RowBtn onClick={(e) => e.stopPropagation()}>
               <Icon name="picture_as_pdf" size={18} />
             </RowBtn>
           </Tooltip>
-          <Tooltip content="Enviar por correo" side="top">
-            <RowBtn onClick={(e) => e.stopPropagation()}>
-              <Icon name="send" size={18} />
-            </RowBtn>
-          </Tooltip>
-          {r.status !== "voided" && (
-            <Tooltip content="Anular comprobante" side="top">
-              <DangerRowBtn onClick={(e) => { e.stopPropagation(); onAnular(r); }}>
-                <Icon name="cancel" size={18} />
-              </DangerRowBtn>
-            </Tooltip>
-          )}
           <Tooltip content="Más opciones" side="top">
             <RowBtn onClick={(e) => e.stopPropagation()}>
               <Icon name="more_vert" size={18} />
@@ -737,114 +596,85 @@ function buildColumns(onAnular: (v: Voucher) => void): ColumnDef<Voucher>[] {
 
 /* ── Page ────────────────────────────────────────────── */
 
-export default function Vouchers() {
+export default function DebitNotes() {
   const [page, setPage]                   = useState(1);
   const [search, setSearch]               = useState("");
-  const [typeFilter, setTypeFilter]       = useState<VoucherType | "all">("all");
-  const [statusFilter, setStatusFilter]   = useState<VoucherStatus | "all">("all");
+  const [statusFilter, setStatusFilter]   = useState<NoteStatus | "all">("all");
   const [drawerOpen, setDrawerOpen]       = useState(false);
-  const [detailVoucher, setDetailVoucher] = useState<Voucher | null>(null);
-  const [anularTarget, setAnularTarget]   = useState<Voucher | null>(null);
-  const [voucherType, setVoucherType]     = useState<VoucherType>("factura");
-  const [voucherItems, setVoucherItems]   = useState<LineItem[]>([]);
-  const [anularReason, setAnularReason]   = useState("");
+  const [detailNote, setDetailNote]       = useState<DebitNote | null>(null);
+  const [noteItems, setNoteItems]         = useState<LineItem[]>([]);
   const { toast } = useToast();
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return VOUCHERS.filter((r) => {
-      const matchText   = !q || r.clientName.toLowerCase().includes(q) || r.serie.toLowerCase().includes(q) || r.clientDoc.toLowerCase().includes(q);
-      const matchType   = typeFilter === "all"   || r.type   === typeFilter;
+    return DEBIT_NOTES.filter((r) => {
+      const matchText   = !q || r.clientName.toLowerCase().includes(q) || r.serie.toLowerCase().includes(q) || r.refVoucher.toLowerCase().includes(q);
       const matchStatus = statusFilter === "all" || r.status === statusFilter;
-      return matchText && matchType && matchStatus;
+      return matchText && matchStatus;
     });
-  }, [search, typeFilter, statusFilter]);
+  }, [search, statusFilter]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const pageData   = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  function applySearch(v: string) { setSearch(v); setPage(1); }
-  function applyType(v: VoucherType | "all") { setTypeFilter(v); setPage(1); }
-  function applyStatus(v: VoucherStatus | "all") { setStatusFilter(v); setPage(1); }
-
-  function handleAnular(v: Voucher) {
-    setAnularTarget(v);
-    setAnularReason("");
-  }
-
-  function confirmAnular() {
-    if (!anularTarget) return;
-    setAnularTarget(null);
-    toast({
-      variant: "warning",
-      title: "Comprobante anulado",
-      description: `${anularTarget.serie} — la baja ha sido comunicada a SUNAT.`,
-    });
-  }
+  const columns = buildColumns();
 
   function handleEmit() {
     setDrawerOpen(false);
-    toast({ variant: "success", title: "Comprobante emitido", description: "Enviado a SUNAT exitosamente." });
+    setNoteItems([]);
+    toast({ variant: "success", title: "Nota de débito emitida", description: "Enviada a SUNAT exitosamente." });
   }
-
-  const columns = buildColumns(handleAnular);
 
   return (
     <ContentArea>
       <motion.div variants={fadeUp} initial="hidden" animate="visible">
         <Breadcrumb>
-          <span>Ventas</span><span>›</span>
-          <BreadcrumbActive>Comprobantes</BreadcrumbActive>
+          <span>Facturación</span><span>›</span>
+          <BreadcrumbActive>Notas de Débito</BreadcrumbActive>
         </Breadcrumb>
         <PageHeading>
           <div>
-            <PageTitle>Comprobantes Emitidos</PageTitle>
-            <PageSubtitle>Facturas y boletas electrónicas registradas y enviadas a SUNAT.</PageSubtitle>
+            <PageTitle>Notas de Débito</PageTitle>
+            <PageSubtitle>Correcciones que aumentan el monto de un comprobante ya emitido (intereses, cargos adicionales, diferencias de precio).</PageSubtitle>
           </div>
-          <div style={{ display: "flex", gap: "1.2rem" }}>
-            <Button variant="outline"><Icon name="download" size={18} />Exportar</Button>
-            <Button variant="primary" onClick={() => setDrawerOpen(true)}>
-              <Icon name="add" size={18} />Nuevo Comprobante
-            </Button>
-          </div>
+          <Button variant="primary" onClick={() => setDrawerOpen(true)}>
+            <Icon name="add" size={18} />Nueva Nota de Débito
+          </Button>
         </PageHeading>
       </motion.div>
 
       <KpiGrid variants={staggerContainer} initial="hidden" animate="visible">
         <KpiCard variants={fadeUp}>
-          <KpiLabel>Emitidas Hoy</KpiLabel>
-          <KpiValue>47</KpiValue>
-          <KpiSub>+8 vs ayer</KpiSub>
-          <KpiBgIcon><Icon name="receipt_long" size={80} /></KpiBgIcon>
+          <KpiLabel>Emitidas Este Mes</KpiLabel>
+          <KpiValue>09</KpiValue>
+          <KpiSub>+2 vs mes anterior</KpiSub>
+          <KpiBgIcon><Icon name="add_circle" size={80} /></KpiBgIcon>
         </KpiCard>
         <KpiCard variants={fadeUp}>
-          <KpiLabel>Monto Total Mes</KpiLabel>
-          <KpiValue>S/ 138,420</KpiValue>
-          <KpiSub>432 comprobantes</KpiSub>
+          <KpiLabel>Monto Cargado</KpiLabel>
+          <KpiValue $color="var(--color-warning)">S/ 2,375</KpiValue>
+          <KpiSub>Cargos adicionales</KpiSub>
           <KpiBgIcon><Icon name="payments" size={80} /></KpiBgIcon>
         </KpiCard>
         <KpiCard variants={fadeUp}>
-          <KpiLabel>Pendiente SUNAT</KpiLabel>
-          <KpiValue $color="var(--color-warning)">03</KpiValue>
+          <KpiLabel>Pendientes SUNAT</KpiLabel>
+          <KpiValue $color="var(--color-warning)">01</KpiValue>
           <KpiSub>En cola de envío</KpiSub>
           <KpiBgIcon><Icon name="cloud_upload" size={80} /></KpiBgIcon>
         </KpiCard>
         <KpiCard variants={fadeUp}>
-          <KpiLabel>Anuladas</KpiLabel>
-          <KpiValue $color="var(--color-danger)">02</KpiValue>
-          <KpiSub>Este mes</KpiSub>
-          <KpiBgIcon><Icon name="cancel" size={80} /></KpiBgIcon>
+          <KpiLabel>Por Intereses</KpiLabel>
+          <KpiValue>04</KpiValue>
+          <KpiSub>Motivo más frecuente</KpiSub>
+          <KpiBgIcon><Icon name="percent" size={80} /></KpiBgIcon>
         </KpiCard>
       </KpiGrid>
 
       <motion.div variants={fadeUp} initial="hidden" animate="visible">
         <TablePanel>
           <TableHeader>
-            <TableTitle>Registro de Comprobantes</TableTitle>
+            <TableTitle>Registro de Notas de Débito</TableTitle>
             <div style={{ display: "flex", gap: "0.8rem" }}>
-              <Tooltip content="Filtrar tabla" side="top">
-                <TableIconBtn><Icon name="filter_list" size={20} /></TableIconBtn>
-              </Tooltip>
               <Tooltip content="Descargar Excel" side="top">
                 <TableIconBtn><Icon name="download" size={20} /></TableIconBtn>
               </Tooltip>
@@ -856,27 +686,18 @@ export default function Vouchers() {
               <SearchIconEl><Icon name="search" size={16} /></SearchIconEl>
               <SearchInput
                 type="text"
-                placeholder="Buscar por cliente, serie..."
+                placeholder="Buscar por cliente, serie o referencia..."
                 value={search}
-                onChange={(e) => applySearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               />
             </SearchWrap>
-            <FilterGroups>
-              <ChipGroup>
-                {TYPE_CHIPS.map((c) => (
-                  <Chip key={c.value} $active={typeFilter === c.value} onClick={() => applyType(c.value)}>
-                    {c.label}
-                  </Chip>
-                ))}
-              </ChipGroup>
-              <ChipGroup>
-                {STATUS_CHIPS.map((c) => (
-                  <Chip key={c.value} $active={statusFilter === c.value} onClick={() => applyStatus(c.value)}>
-                    {c.label}
-                  </Chip>
-                ))}
-              </ChipGroup>
-            </FilterGroups>
+            <ChipGroup>
+              {STATUS_CHIPS.map((c) => (
+                <Chip key={c.value} $active={statusFilter === c.value} onClick={() => { setStatusFilter(c.value); setPage(1); }}>
+                  {c.label}
+                </Chip>
+              ))}
+            </ChipGroup>
           </FilterBar>
 
           <Table
@@ -884,7 +705,7 @@ export default function Vouchers() {
             columns={columns}
             keyField="id"
             density="default"
-            onRowClick={(r) => setDetailVoucher(r)}
+            onRowClick={(r) => setDetailNote(r)}
           />
 
           <PaginationBar>
@@ -894,67 +715,52 @@ export default function Vouchers() {
         </TablePanel>
       </motion.div>
 
-      {/* Nuevo Comprobante drawer */}
+      {/* Nueva Nota de Débito drawer */}
       <Drawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        title="Nuevo Comprobante"
-        description="Emite una factura o boleta electrónica"
+        title="Nueva Nota de Débito"
+        description="Agrega cargos adicionales a un comprobante ya emitido"
         size="lg"
         side="right"
       >
         <DrawerBody>
           <FormSection>
-            <SectionTitle>Tipo de Comprobante</SectionTitle>
-            <TypeToggle>
-              <TypeBtn $active={voucherType === "factura"} onClick={() => setVoucherType("factura")}>
-                Factura Electrónica
-              </TypeBtn>
-              <TypeBtn $active={voucherType === "boleta"} onClick={() => setVoucherType("boleta")}>
-                Boleta de Venta
-              </TypeBtn>
-            </TypeToggle>
-          </FormSection>
-
-          <FormSection>
-            <SectionTitle>Datos del {voucherType === "factura" ? "Cliente (RUC)" : "Comprador"}</SectionTitle>
+            <SectionTitle>Comprobante de Referencia</SectionTitle>
             <FieldGroup>
-              <FieldLabel>{voucherType === "factura" ? "RUC" : "DNI (opcional)"}</FieldLabel>
-              <RucRow>
-                <FieldInput type="text" placeholder={voucherType === "factura" ? "20xxxxxxxxx" : "DNI o dejar vacío"} style={{ flex: 1 }} />
-                <SearchDocBtn type="button">Buscar</SearchDocBtn>
-              </RucRow>
+              <FieldLabel>Número de Comprobante</FieldLabel>
+              <RefBox>
+                <Icon name="receipt_long" size={18} />
+                <RefMono>F001-00000882</RefMono>
+                <span style={{ fontSize: "1.2rem", color: "var(--color-text-muted)" }}>Tech Solutions Peru S.A.C.</span>
+              </RefBox>
             </FieldGroup>
             <FieldGroup>
-              <FieldLabel>Razón Social / Nombre</FieldLabel>
-              <FieldInput type="text" placeholder="Se autocompletará" readOnly />
+              <FieldLabel>Motivo de la Nota de Débito</FieldLabel>
+              <FieldSelect defaultValue="intereses">
+                <option value="intereses">01 — Intereses por mora</option>
+                <option value="cargo_adicional">02 — Aumento en el valor</option>
+                <option value="diferencia_precio">03 — Penalidades / otras penalidades</option>
+                <option value="otros">11 — Ajustes de operaciones de exportación</option>
+              </FieldSelect>
             </FieldGroup>
           </FormSection>
 
           <FormSection>
-            <SectionTitle>Productos / Servicios</SectionTitle>
-            <LineItemsEditor items={voucherItems} onChange={setVoucherItems} />
+            <SectionTitle>Ítems / Cargos Adicionales</SectionTitle>
+            <LineItemsEditor items={noteItems} onChange={setNoteItems} />
           </FormSection>
 
           <FormSection>
-            <SectionTitle>Condiciones</SectionTitle>
-            <FieldGrid2>
-              <FieldGroup>
-                <FieldLabel>Moneda</FieldLabel>
-                <FieldSelect defaultValue="PEN">
-                  <option value="PEN">Soles (PEN)</option>
-                  <option value="USD">Dólares (USD)</option>
-                </FieldSelect>
-              </FieldGroup>
-              <FieldGroup>
-                <FieldLabel>Condición de Pago</FieldLabel>
-                <FieldSelect defaultValue="contado">
-                  <option value="contado">Al contado</option>
-                  <option value="credito15">Crédito 15 días</option>
-                  <option value="credito30">Crédito 30 días</option>
-                </FieldSelect>
-              </FieldGroup>
-            </FieldGrid2>
+            <SectionTitle>Datos del Receptor</SectionTitle>
+            <FieldGroup>
+              <FieldLabel>RUC / DNI</FieldLabel>
+              <FieldInput type="text" defaultValue="20512345678" readOnly />
+            </FieldGroup>
+            <FieldGroup>
+              <FieldLabel>Razón Social</FieldLabel>
+              <FieldInput type="text" defaultValue="Tech Solutions Peru S.A.C." readOnly />
+            </FieldGroup>
           </FormSection>
         </DrawerBody>
 
@@ -962,8 +768,8 @@ export default function Vouchers() {
           <DrawerFooterRow>
             <OutlineBtn type="button" onClick={() => setDrawerOpen(false)}>Cancelar</OutlineBtn>
             <PrimaryBtn type="button" onClick={handleEmit}>
-              <Icon name="receipt_long" size={18} />
-              Emitir Comprobante
+              <Icon name="add_circle" size={18} />
+              Emitir Nota de Débito
             </PrimaryBtn>
           </DrawerFooterRow>
         </Drawer.Footer>
@@ -971,36 +777,53 @@ export default function Vouchers() {
 
       {/* Detail drawer */}
       <Drawer
-        open={!!detailVoucher}
-        onClose={() => setDetailVoucher(null)}
-        title={detailVoucher?.serie ?? ""}
-        description={detailVoucher ? TYPE_LABEL[detailVoucher.type] : ""}
+        open={!!detailNote}
+        onClose={() => setDetailNote(null)}
+        title={detailNote?.serie ?? ""}
+        description="Nota de Débito Electrónica"
         size="md"
         side="right"
       >
-        {detailVoucher && (
+        {detailNote && (
           <>
             <DetailBody>
               <DetailSection>
-                <SectionTitle>Información del Comprobante</SectionTitle>
+                <SectionTitle>Información General</SectionTitle>
                 <DetailGrid>
                   <DetailItem>
-                    <ItemLabel>Serie / Número</ItemLabel>
-                    <MonoValue>{detailVoucher.serie}</MonoValue>
+                    <ItemLabel>Número</ItemLabel>
+                    <MonoValue>{detailNote.serie}</MonoValue>
                   </DetailItem>
                   <DetailItem>
                     <ItemLabel>Estado SUNAT</ItemLabel>
-                    <Badge variant={STATUS_CFG[detailVoucher.status].variant} dot pill size="sm">
-                      {STATUS_CFG[detailVoucher.status].label}
+                    <Badge variant={STATUS_CFG[detailNote.status].variant} dot pill size="sm">
+                      {STATUS_CFG[detailNote.status].label}
                     </Badge>
                   </DetailItem>
                   <DetailItem>
-                    <ItemLabel>Tipo</ItemLabel>
-                    <ItemValue>{TYPE_LABEL[detailVoucher.type]}</ItemValue>
+                    <ItemLabel>Fecha</ItemLabel>
+                    <ItemValue>{detailNote.date}</ItemValue>
                   </DetailItem>
                   <DetailItem>
-                    <ItemLabel>Fecha de Emisión</ItemLabel>
-                    <ItemValue>{detailVoucher.issueDate}</ItemValue>
+                    <ItemLabel>Monto Cargado</ItemLabel>
+                    <MonoValue style={{ color: "var(--color-warning)" }}>+{detailNote.amount}</MonoValue>
+                  </DetailItem>
+                </DetailGrid>
+              </DetailSection>
+
+              <DetailSection>
+                <SectionTitle>Comprobante de Referencia</SectionTitle>
+                <DetailGrid>
+                  <DetailItem>
+                    <ItemLabel>Número Referencia</ItemLabel>
+                    <MonoValue>{detailNote.refVoucher}</MonoValue>
+                  </DetailItem>
+                  <DetailItem>
+                    <ItemLabel>Motivo</ItemLabel>
+                    <ReasonPill>
+                      <Icon name="info" size={13} />
+                      {REASON_LABEL[detailNote.reason]}
+                    </ReasonPill>
                   </DetailItem>
                 </DetailGrid>
               </DetailSection>
@@ -1010,96 +833,32 @@ export default function Vouchers() {
                 <DetailGrid>
                   <DetailItem style={{ gridColumn: "span 2" }}>
                     <ItemLabel>Razón Social</ItemLabel>
-                    <ItemValue>{detailVoucher.clientName}</ItemValue>
+                    <ItemValue>{detailNote.clientName}</ItemValue>
                   </DetailItem>
                   <DetailItem>
                     <ItemLabel>Documento</ItemLabel>
-                    <MonoValue>{detailVoucher.clientDoc}</MonoValue>
+                    <MonoValue>{detailNote.clientDoc}</MonoValue>
                   </DetailItem>
                 </DetailGrid>
-              </DetailSection>
-
-              <DetailSection>
-                <SectionTitle>Montos</SectionTitle>
-                <TotalCard>
-                  <TotalRow>
-                    <span>Subtotal (sin IGV)</span>
-                    <MonoValue style={{ fontSize: "1.3rem" }}>{detailVoucher.amount}</MonoValue>
-                  </TotalRow>
-                  <TotalRow>
-                    <span>IGV (18%)</span>
-                    <MonoValue style={{ fontSize: "1.3rem" }}>{detailVoucher.igv}</MonoValue>
-                  </TotalRow>
-                  <TotalFinal>
-                    <span>Total</span>
-                    <MonoValue style={{ fontSize: "1.6rem", color: "inherit" }}>{detailVoucher.total}</MonoValue>
-                  </TotalFinal>
-                </TotalCard>
               </DetailSection>
             </DetailBody>
 
             <Drawer.Footer>
               <DrawerFooterRow>
-                <OutlineBtn type="button" onClick={() => setDetailVoucher(null)}>Cerrar</OutlineBtn>
+                <OutlineBtn type="button" onClick={() => setDetailNote(null)}>Cerrar</OutlineBtn>
                 <PrimaryBtn
                   type="button"
                   style={{ flex: "unset", paddingLeft: "2rem", paddingRight: "2rem" }}
-                  onClick={() => {
-                    setDetailVoucher(null);
-                    toast({ variant: "info", title: "Descargando PDF…", description: detailVoucher.serie });
-                  }}
+                  onClick={() => toast({ variant: "info", title: "Descargando PDF…", description: detailNote.serie })}
                 >
                   <Icon name="picture_as_pdf" size={18} />
-                  Ver PDF
+                  PDF
                 </PrimaryBtn>
               </DrawerFooterRow>
             </Drawer.Footer>
           </>
         )}
       </Drawer>
-
-      {/* Anular confirmation modal */}
-      <Modal
-        open={!!anularTarget}
-        onClose={() => setAnularTarget(null)}
-        title="Anular Comprobante"
-        description="Esta acción comunicará la baja a SUNAT y no se puede revertir"
-        size="sm"
-      >
-        <ConfirmBody>
-          <ConfirmDesc>
-            El comprobante quedará con estado <strong>ANULADO</strong> y se enviará la comunicación
-            de baja a SUNAT. Ingresa el motivo de anulación requerido por el SRI.
-          </ConfirmDesc>
-          {anularTarget && (
-            <ConfirmRecord>
-              <RecordId>{anularTarget.serie}</RecordId>
-              <RecordSub>{anularTarget.clientName}</RecordSub>
-              <RecordSub style={{ fontWeight: 700 }}>{anularTarget.total}</RecordSub>
-            </ConfirmRecord>
-          )}
-          <div>
-            <ReasonLabel htmlFor="anular-reason">Motivo de Anulación *</ReasonLabel>
-            <ReasonInput
-              id="anular-reason"
-              placeholder="Ej. Error en datos del cliente, duplicado, etc."
-              value={anularReason}
-              onChange={(e) => setAnularReason(e.target.value)}
-            />
-          </div>
-        </ConfirmBody>
-        <Modal.Footer>
-          <Button variant="outline" onClick={() => setAnularTarget(null)}>Cancelar</Button>
-          <Button
-            variant="primary"
-            onClick={confirmAnular}
-            style={{ background: "var(--color-danger)", borderColor: "var(--color-danger)" }}
-          >
-            <Icon name="cancel" size={16} />
-            Confirmar Anulación
-          </Button>
-        </Modal.Footer>
-      </Modal>
     </ContentArea>
   );
 }
