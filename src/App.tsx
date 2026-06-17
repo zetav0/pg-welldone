@@ -10,6 +10,7 @@ import Inventory from "./pages/Inventory";
 import Sales from "./pages/Sales";
 import Settings from "./pages/Settings";
 import Purchases from "./pages/Purchases";
+import Customers from "./pages/Customers";
 import InvoicingLayout from "./pages/invoicing/InvoicingLayout";
 import Quotes from "./pages/invoicing/Quotes";
 import Vouchers from "./pages/invoicing/Vouchers";
@@ -33,7 +34,8 @@ const router = createBrowserRouter([
       { path: "/inventory", element: <Inventory /> },
       { path: "/sales",     element: <Sales />     },
       { path: "/settings",  element: <Settings />  },
-      { path: "/purchases", element: <Purchases /> },
+      { path: "/purchases",  element: <Purchases />  },
+      { path: "/customers",  element: <Customers />  },
       {
         path: "/invoicing",
         element: <InvoicingLayout />,
