@@ -7,6 +7,9 @@ import { Modal } from "../components/ui/Modal";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { Icon } from "../components/ui/Icon";
+import { Loader } from "../components/ui/Loader";
+import { Skeleton } from "../components/ui/Skeleton";
+import { Card, StatCard, ProfileCard, ActionCard, AlertCard } from "../components/ui/Card";
 
 /* ── Layout ─────────────────────────────────────────── */
 
@@ -57,7 +60,7 @@ const SectionTitle = styled.h3`
   color: ${(p) => p.theme.colors.textMuted};
 `;
 
-const Card = styled.div`
+const SectionCard = styled.div`
   background: ${(p) => p.theme.colors.surface};
   border: 1px solid ${(p) => p.theme.colors.border};
   border-radius: 1.6rem;
@@ -135,6 +138,62 @@ const WarningBox = styled.div`
   font-size: 1.3rem;
 `;
 
+/* ── Skeleton demo helpers ───────────────────────────── */
+
+const SkeletonTwoCol = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.6rem;
+  width: 100%;
+`;
+
+const SkeletonFourGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.6rem;
+  width: 100%;
+`;
+
+const DemoCard = styled.div`
+  background: ${(p) => p.theme.colors.surface};
+  border: 1px solid ${(p) => p.theme.colors.border};
+  border-radius: 1.2rem;
+  padding: 2.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+`;
+
+const DemoCardTop = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+`;
+
+const DemoIconBox = styled.div<{ $color: string }>`
+  width: 3.8rem;
+  height: 3.8rem;
+  border-radius: 0.8rem;
+  background: ${(p) => p.$color};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const DemoValue = styled.p`
+  margin: 0;
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: -0.1rem;
+  color: ${(p) => p.theme.colors.text};
+`;
+
+const DemoLabel = styled.p`
+  margin: 0.4rem 0 0;
+  font-size: 1.4rem;
+  color: ${(p) => p.theme.colors.textMuted};
+`;
+
 /* ── Component ───────────────────────────────────────── */
 
 export default function Sales() {
@@ -142,6 +201,8 @@ export default function Sales() {
   const [formOpen, setFormOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [lgOpen, setLgOpen] = useState(false);
+  const [loadingDemo, setLoadingDemo] = useState(true);
+  const [dismissedAlert, setDismissedAlert] = useState(false);
 
   return (
     <PageShell>
@@ -163,7 +224,7 @@ export default function Sales() {
           {/* Modales */}
           <Section variants={fadeUp}>
             <SectionTitle>Modal</SectionTitle>
-            <Card>
+            <SectionCard>
               <Row>
                 <Label>Básico</Label>
                 <Button variant="outline" onClick={() => setBasicOpen(true)}>
@@ -201,13 +262,13 @@ export default function Sales() {
                   Modal lg
                 </Button>
               </Row>
-            </Card>
+            </SectionCard>
           </Section>
 
           {/* Botones */}
           <Section variants={fadeUp}>
             <SectionTitle>Button</SectionTitle>
-            <Card>
+            <SectionCard>
               <Row>
                 <Label>Variantes</Label>
                 <Button variant="primary">Primary</Button>
@@ -226,13 +287,13 @@ export default function Sales() {
                   Exportar
                 </Button>
               </Row>
-            </Card>
+            </SectionCard>
           </Section>
 
           {/* Badges */}
           <Section variants={fadeUp}>
             <SectionTitle>Badge</SectionTitle>
-            <Card>
+            <SectionCard>
               <Row>
                 <Badge variant="primary">Primary</Badge>
                 <Badge variant="success">Success</Badge>
@@ -240,7 +301,335 @@ export default function Sales() {
                 <Badge variant="warning">Warning</Badge>
                 <Badge variant="neutral">Neutral</Badge>
               </Row>
+            </SectionCard>
+          </Section>
+
+          {/* Cards */}
+          <Section variants={fadeUp}>
+            <SectionTitle>Cards</SectionTitle>
+
+            {/* AlertCard */}
+            <Card variant="flat">
+              <Card.Body padding="0">
+                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  {!dismissedAlert && (
+                    <AlertCard
+                      variant="warning"
+                      title="Stock bajo detectado"
+                      description="23 productos están por debajo del mínimo recomendado. Revisa el inventario antes del próximo turno."
+                      action={{ label: "Ir a inventario", onClick: () => {} }}
+                      onDismiss={() => setDismissedAlert(true)}
+                    />
+                  )}
+                  {dismissedAlert && (
+                    <AlertCard
+                      variant="success"
+                      title="Alerta descartada"
+                      description="Puedes volver a mostrarla recargando la página."
+                    />
+                  )}
+                  <AlertCard variant="danger" title="3 productos vencidos" description="Deben retirarse del stock de inmediato." />
+                  <AlertCard variant="info" title="Actualización disponible" description="Hay una nueva versión del sistema. Se instalará esta noche." />
+                </div>
+              </Card.Body>
             </Card>
+
+            {/* StatCard */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "1.6rem" }}>
+              <StatCard
+                icon="point_of_sale"
+                iconVariant="primary"
+                label="Ventas del mes"
+                value="1 284"
+                delta={{ value: "+12%", direction: "up" }}
+                badge={{ label: "Mayo", variant: "neutral" }}
+              />
+              <StatCard
+                icon="inventory_2"
+                iconVariant="success"
+                label="Productos activos"
+                value="348"
+                delta={{ value: "+3", direction: "up" }}
+                badge={{ label: "En stock", variant: "success" }}
+              />
+              <StatCard
+                icon="warning"
+                iconVariant="warning"
+                label="Stock bajo"
+                value="23"
+                delta={{ value: "-5", direction: "down" }}
+                badge={{ label: "Revisar", variant: "warning" }}
+              />
+              <StatCard
+                icon="event_busy"
+                iconVariant="danger"
+                label="Por vencer"
+                value="7"
+                delta={{ value: "sin cambio", direction: "flat" }}
+                badge={{ label: "Urgente", variant: "danger" }}
+              />
+            </div>
+
+            {/* ProfileCard */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.6rem" }}>
+              <ProfileCard
+                name="Dra. María López"
+                role="Farmacéutica Jefe"
+                meta="Turno mañana · Ext. 204"
+                stats={[{ label: "Atendidos hoy", value: 24 }, { label: "Pendientes", value: 3 }]}
+                action={{ label: "Ver perfil completo", onClick: () => {} }}
+              />
+              <ProfileCard
+                name="Carlos Mendoza"
+                role="Asistente de Farmacia"
+                meta="Turno tarde · Ext. 218"
+                stats={[{ label: "Atendidos hoy", value: 18 }, { label: "Pendientes", value: 0 }]}
+                action={{ label: "Ver perfil completo", onClick: () => {} }}
+              />
+            </div>
+
+            {/* ActionCard grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "1.6rem" }}>
+              <ActionCard icon="add_shopping_cart" label="Nueva venta" description="Registrar transacción" onClick={() => {}} badge="Nuevo" variant="primary" />
+              <ActionCard icon="inventory_2" label="Inventario" description="Gestionar stock" onClick={() => {}} />
+              <ActionCard icon="receipt_long" label="Historial" description="Ver ventas pasadas" onClick={() => {}} />
+              <ActionCard icon="local_shipping" label="Pedidos" description="Órdenes de reposición" onClick={() => {}} />
+            </div>
+
+            {/* Card compound */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.6rem" }}>
+              <Card>
+                <Card.Header
+                  title="Resumen semanal"
+                  subtitle="Del 9 al 15 de junio"
+                  action={<Button variant="ghost"><Icon name="more_horiz" size={18} /></Button>}
+                />
+                <Card.Body>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
+                    {[
+                      { label: "Ventas totales", value: "S/ 8 420" },
+                      { label: "Ticket promedio", value: "S/ 32.40" },
+                      { label: "Productos vendidos", value: "260 unid." },
+                    ].map((row) => (
+                      <div key={row.label} style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ fontSize: "1.3rem", color: "var(--color-text-muted)" }}>{row.label}</span>
+                        <span style={{ fontSize: "1.3rem", fontWeight: 700, color: "var(--color-text)" }}>{row.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Card.Body>
+                <Card.Footer justify="space-between">
+                  <span style={{ fontSize: "1.2rem", color: "var(--color-text-muted)" }}>Actualizado hace 5 min</span>
+                  <Button variant="outline">Ver detalles</Button>
+                </Card.Footer>
+              </Card>
+
+              <Card variant="bordered" hover>
+                <Card.Header title="Acceso rápido" subtitle="Atajos frecuentes" divider={false} />
+                <Card.Divider />
+                <Card.Body>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                    {[
+                      { icon: "print", label: "Imprimir cierre del día" },
+                      { icon: "cloud_download", label: "Exportar reporte mensual" },
+                      { icon: "settings", label: "Configurar alertas de stock" },
+                    ].map((item) => (
+                      <button
+                        key={item.label}
+                        style={{ display: "flex", alignItems: "center", gap: "1.2rem", padding: "1rem", borderRadius: "0.8rem", border: "none", background: "transparent", cursor: "pointer", fontFamily: "inherit", fontSize: "1.3rem", color: "var(--color-text-subtle)", transition: "background 0.15s", width: "100%", textAlign: "left" }}
+                        onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "var(--color-surface)")}
+                        onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "transparent")}
+                      >
+                        <Icon name={item.icon} size={18} />
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </Card.Body>
+              </Card>
+            </div>
+          </Section>
+
+          {/* Skeleton */}
+          <Section variants={fadeUp}>
+            <SectionTitle>Skeleton</SectionTitle>
+            <SectionCard>
+              {/* Formas base */}
+              <Row style={{ alignItems: "flex-end" }}>
+                <Label>Base</Label>
+                <div style={{ flex: 1 }}>
+                  <Skeleton />
+                </div>
+                <Skeleton width="14rem" height="1.4rem" />
+                <Skeleton width="4rem" height="4rem" radius="0.8rem" />
+                <Skeleton width="4rem" circle />
+              </Row>
+
+              <Divider />
+
+              {/* Text */}
+              <Row style={{ alignItems: "flex-start" }}>
+                <Label>Text</Label>
+                <div style={{ flex: 1 }}>
+                  <Skeleton.Text lines={3} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <Skeleton.Text lines={4} lineHeight="1.2rem" lastLineWidth="45%" />
+                </div>
+              </Row>
+
+              <Divider />
+
+              {/* Avatar */}
+              <Row style={{ alignItems: "flex-end" }}>
+                <Label>Avatar</Label>
+                <Skeleton.Avatar size="xs" />
+                <Skeleton.Avatar size="sm" />
+                <Skeleton.Avatar size="md" />
+                <Skeleton.Avatar size="lg" />
+                <Skeleton.Avatar size="xl" />
+              </Row>
+
+              <Divider />
+
+              {/* Card */}
+              <Row style={{ alignItems: "flex-start" }}>
+                <Label>Card</Label>
+                <SkeletonTwoCol>
+                  <Skeleton.Card lines={3} />
+                  <Skeleton.Card showAvatar={false} lines={4} />
+                </SkeletonTwoCol>
+              </Row>
+
+              <Divider />
+
+              {/* KpiCard */}
+              <Row style={{ alignItems: "flex-start" }}>
+                <Label>KpiCard</Label>
+                <SkeletonTwoCol>
+                  <Skeleton.KpiCard />
+                  <Skeleton.KpiCard />
+                </SkeletonTwoCol>
+              </Row>
+
+              <Divider />
+
+              {/* Table */}
+              <Row style={{ alignItems: "flex-start" }}>
+                <Label>Table</Label>
+                <div style={{ flex: 1 }}>
+                  <Skeleton.Table rows={4} cols={4} />
+                </div>
+              </Row>
+
+              <Divider />
+
+              {/* Demo carga real */}
+              <Row>
+                <Label>Demo</Label>
+                <Button
+                  variant={loadingDemo ? "primary" : "outline"}
+                  onClick={() => setLoadingDemo((v) => !v)}
+                >
+                  <Icon name={loadingDemo ? "check_circle" : "hourglass_empty"} size={16} />
+                  {loadingDemo ? "Mostrar datos" : "Simular carga"}
+                </Button>
+              </Row>
+              <SkeletonFourGrid>
+                {loadingDemo ? (
+                  <>
+                    <Skeleton.KpiCard />
+                    <Skeleton.KpiCard />
+                    <Skeleton.KpiCard />
+                    <Skeleton.KpiCard />
+                  </>
+                ) : (
+                  <>
+                    <DemoCard>
+                      <DemoCardTop>
+                        <DemoIconBox $color="rgba(0,108,117,0.15)">
+                          <Icon name="medication" size={20} />
+                        </DemoIconBox>
+                        <Badge variant="primary">+12%</Badge>
+                      </DemoCardTop>
+                      <div><DemoLabel>Ventas del mes</DemoLabel><DemoValue>1 284</DemoValue></div>
+                    </DemoCard>
+                    <DemoCard>
+                      <DemoCardTop>
+                        <DemoIconBox $color="rgba(34,197,94,0.15)">
+                          <Icon name="inventory_2" size={20} />
+                        </DemoIconBox>
+                        <Badge variant="success">OK</Badge>
+                      </DemoCardTop>
+                      <div><DemoLabel>Productos activos</DemoLabel><DemoValue>348</DemoValue></div>
+                    </DemoCard>
+                    <DemoCard>
+                      <DemoCardTop>
+                        <DemoIconBox $color="rgba(234,179,8,0.15)">
+                          <Icon name="warning" size={20} />
+                        </DemoIconBox>
+                        <Badge variant="warning">Revisar</Badge>
+                      </DemoCardTop>
+                      <div><DemoLabel>Stock bajo</DemoLabel><DemoValue>23</DemoValue></div>
+                    </DemoCard>
+                    <DemoCard>
+                      <DemoCardTop>
+                        <DemoIconBox $color="rgba(239,68,68,0.15)">
+                          <Icon name="event_busy" size={20} />
+                        </DemoIconBox>
+                        <Badge variant="danger">Urgente</Badge>
+                      </DemoCardTop>
+                      <div><DemoLabel>Por vencer</DemoLabel><DemoValue>7</DemoValue></div>
+                    </DemoCard>
+                  </>
+                )}
+              </SkeletonFourGrid>
+            </SectionCard>
+          </Section>
+
+          {/* Loader */}
+          <Section variants={fadeUp}>
+            <SectionTitle>Loader</SectionTitle>
+            <SectionCard>
+              <Row>
+                <Label>Variantes</Label>
+                <Loader variant="spinner" size="md" />
+                <Loader variant="dots" size="md" />
+                <Loader variant="pulse" size="md" />
+              </Row>
+              <Divider />
+              <Row>
+                <Label>Tamaños</Label>
+                <Loader size="xs" />
+                <Loader size="sm" />
+                <Loader size="md" />
+                <Loader size="lg" />
+                <Loader size="xl" />
+              </Row>
+              <Divider />
+              <Row>
+                <Label>Colores</Label>
+                <Loader color="primary" />
+                <Loader color="success" />
+                <Loader color="danger" />
+                <Loader color="warning" />
+                <Loader color="muted" />
+                <Loader color="white" />
+              </Row>
+              <Divider />
+              <Row>
+                <Label>Con texto</Label>
+                <Loader variant="spinner" text="Cargando..." />
+                <Loader variant="dots" text="Procesando" color="success" />
+              </Row>
+              <Divider />
+              <Row style={{ alignItems: "flex-start" }}>
+                <Label>Overlay</Label>
+                <div style={{ position: "relative", width: "16rem", height: "8rem", background: "var(--color-surface)", borderRadius: "0.8rem", border: "1px solid var(--color-border-strong)" }}>
+                  <Loader overlay text="Cargando" size="sm" />
+                </div>
+              </Row>
+            </SectionCard>
           </Section>
         </motion.div>
       </ContentArea>
