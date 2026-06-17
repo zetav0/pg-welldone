@@ -13,6 +13,8 @@ import { Pagination } from "../../components/ui/Pagination";
 import { useToast } from "../../components/common/Toast";
 import { Tooltip } from "../../components/ui/Tooltip";
 import { Modal } from "../../components/ui/Modal";
+import { LineItemsEditor } from "../../components/invoicing/LineItemsEditor";
+import type { LineItem } from "../../components/invoicing/LineItemsEditor";
 
 /* ── Layout ──────────────────────────────────────────── */
 
@@ -489,36 +491,6 @@ const EmptyLabel = styled.p`
   color: ${(p) => p.theme.colors.textMuted};
 `;
 
-const AddLineBtn = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: ${(p) => p.theme.colors.primary};
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  padding: 0;
-
-  &:hover { text-decoration: underline; }
-`;
-
-const CatalogBtn = styled.button`
-  padding: 0.8rem 1.6rem;
-  background: ${(p) => p.theme.colors.surface};
-  border: 1px solid ${(p) => p.theme.colors.border};
-  border-radius: 0.8rem;
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: ${(p) => p.theme.colors.text};
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s;
-
-  &:hover { background: ${(p) => p.theme.colors.chipBg}; }
-`;
 
 const DrawerFooterRow = styled.div`
   display: flex;
@@ -784,6 +756,7 @@ export default function Quotes() {
   const [search, setSearch]                 = useState("");
   const [statusFilter, setStatusFilter]     = useState<QuoteStatus | "all">("all");
   const [drawerOpen, setDrawerOpen]         = useState(false);
+  const [quoteItems, setQuoteItems]         = useState<LineItem[]>([]);
   const [detailQuote, setDetailQuote]       = useState<Quote | null>(null);
   const [facturarTarget, setFacturarTarget] = useState<Quote | null>(null);
   const { toast } = useToast();
@@ -997,22 +970,11 @@ export default function Quotes() {
           </Step>
 
           <Step>
-            <StepHeader>
-              <StepTitle>
-                <StepBadge>2</StepBadge>
-                <StepLabel>Productos / Servicios</StepLabel>
-              </StepTitle>
-              <AddLineBtn type="button">
-                <Icon name="add" size={16} />
-                Agregar Línea
-              </AddLineBtn>
-            </StepHeader>
-
-            <EmptyProducts>
-              <Icon name="inventory" size={40} />
-              <EmptyLabel>No hay productos agregados todavía.</EmptyLabel>
-              <CatalogBtn type="button">Explorar Catálogo</CatalogBtn>
-            </EmptyProducts>
+            <StepTitle>
+              <StepBadge>2</StepBadge>
+              <StepLabel>Productos / Servicios</StepLabel>
+            </StepTitle>
+            <LineItemsEditor items={quoteItems} onChange={setQuoteItems} />
           </Step>
 
           <Step>

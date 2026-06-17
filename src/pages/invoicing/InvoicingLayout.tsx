@@ -50,9 +50,11 @@ const OutletWrapper = styled.div`
 /* ── Sub-module tabs ─────────────────────────────────── */
 
 const TABS = [
-  { to: "/invoicing/quotes",    label: "Cotizaciones",  icon: "request_quote" },
-  { to: "/invoicing/vouchers",  label: "Comprobantes",  icon: "receipt_long"  },
-  { to: "/invoicing/guides",    label: "Guías",         icon: "local_shipping" },
+  { to: "/invoicing/quotes",       label: "Cotizaciones",    icon: "request_quote"  },
+  { to: "/invoicing/vouchers",     label: "Comprobantes",    icon: "receipt_long"   },
+  { to: "/invoicing/guides",       label: "Guías",           icon: "local_shipping" },
+  { to: "/invoicing/credit-notes", label: "Notas Crédito",   icon: "credit_score"   },
+  { to: "/invoicing/debit-notes",  label: "Notas Débito",    icon: "request_page"   },
 ] as const;
 
 /* ── Layout ──────────────────────────────────────────── */
