@@ -116,10 +116,11 @@ export const quickActions: QuickAction[] = [
 ];
 
 export const sidebarNavItems: NavItem[] = [
-  { icon: "inventory_2",    label: "Inventory",    path: "/inventory"  },
-  { icon: "receipt_long",   label: "Facturación",  path: "/invoicing"  },
-  { icon: "point_of_sale",  label: "Sales",        path: "/sales"      },
-  { icon: "shopping_cart",  label: "Purchases",    path: "/purchases"  },
-  { icon: "group",          label: "Clientes",     path: "/customers"  },
-  { icon: "analytics",      label: "Reports",      path: "#"           },
+  { icon: "inventory_2",    label: "Inventory",    path: "/inventory"   },
+  { icon: "receipt_long",   label: "Facturación",  path: "/invoicing"   },
+  { icon: "point_of_sale",  label: "Sales",        path: "/sales"       },
+  { icon: "shopping_cart",  label: "Purchases",    path: "/purchases"   },
+  { icon: "group",          label: "Clientes",     path: "/customers"   },
+  { icon: "payments",       label: "Cobranzas",    path: "/collections" },
+  { icon: "analytics",      label: "Reports",      path: "#"            },
 ];
