@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { of } from "rxjs";
 import styled from "styled-components";
@@ -15,6 +15,12 @@ import { Icon } from "../components/ui/Icon";
 import { Pagination } from "../components/ui/Pagination";
 import { Drawer } from "../components/common/Drawer";
 import { useToast } from "../components/common/Toast";
+import { ComboboxCustom } from "../components/common/Combobox";
+import type { ComboboxOption } from "../components/common/Combobox";
+import { getDepartamentos, getProvincias, getDistritos } from "../data/ubigeo";
+import { useApp } from "@/context/AppContext";
+import { useCompany } from "@/context/CompanyContext";
+import { RestApi } from "@/services/restApi";
 import { clients, customerKpis } from "../data/customers";
 import type { Client, ClientSegment, ClientStatus, ClientType } from "../data/customers";
 
@@ -394,23 +400,6 @@ const FormInput = styled.input`
   }
 `;
 
-const FormSelect = styled.select`
-  padding: 1rem 1.2rem;
-  border: 1px solid ${(p) => p.theme.colors.borderStrong};
-  border-radius: 0.8rem;
-  background: ${(p) => p.theme.colors.inputBg};
-  font-size: 1.4rem;
-  font-family: inherit;
-  color: ${(p) => p.theme.colors.text};
-  outline: none;
-  cursor: pointer;
-  transition: border-color 0.15s;
-
-  &:focus {
-    border-color: ${(p) => p.theme.colors.primary};
-    box-shadow: 0 0 0 3px ${(p) => p.theme.colors.primaryBg};
-  }
-`;
 
 const FormRow = styled.div`
   display: grid;
@@ -648,27 +637,30 @@ function buildColumns(
 /* ── Form schema ─────────────────────────────────────── */
 
 const customerSchema = z.object({
-  type:    z.enum(["empresa", "persona"]),
-  rucDni:  z.string(),
-  name:    z.string().min(3, "Mínimo 3 caracteres"),
-  email:   z.string().email("Correo electrónico inválido"),
-  phone:   z.string().optional().or(z.literal("")),
-  address: z.string().min(5, "Dirección requerida"),
-  segment: z.enum(["vip", "recurrente", "nuevo"]),
+  tipo_documento:   z.enum(["1", "6"]),
+  numero_documento: z.string(),
+  razon_social:     z.string().min(3, "Mínimo 3 caracteres"),
+  email:            z.string().email("Correo electrónico inválido"),
+  telefono:         z.string().optional().or(z.literal("")),
+  direccion:        z.string().min(5, "Dirección requerida"),
+  departamento:     z.string().min(2, "Selecciona un departamento"),
+  provincia:        z.string().min(2, "Selecciona una provincia"),
+  distrito:         z.string().min(2, "Selecciona un distrito"),
 }).superRefine((d, ctx) => {
-  if (d.type === "empresa") {
-    if (!/^\d{11}$/.test(d.rucDni))
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["rucDni"], message: "RUC debe tener exactamente 11 dígitos" });
+  if (d.tipo_documento === "6") {
+    if (!/^\d{11}$/.test(d.numero_documento))
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["numero_documento"], message: "RUC debe tener exactamente 11 dígitos" });
   } else {
-    if (!/^\d{8}$/.test(d.rucDni))
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["rucDni"], message: "DNI debe tener exactamente 8 dígitos" });
+    if (!/^\d{8}$/.test(d.numero_documento))
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["numero_documento"], message: "DNI debe tener exactamente 8 dígitos" });
   }
 });
 
 type CustomerFields = z.infer<typeof customerSchema>;
 
 const BLANK_CUSTOMER: CustomerFields = {
-  type: "empresa", rucDni: "", name: "", email: "", phone: "", address: "", segment: "nuevo",
+  tipo_documento: "6", numero_documento: "", razon_social: "", email: "",
+  telefono: "", direccion: "", departamento: "", provincia: "", distrito: "",
 };
 
 /* ── Component ───────────────────────────────────────── */
@@ -677,6 +669,8 @@ type DrawerMode = "none" | "new" | "detail" | "edit";
 
 export default function Customers() {
   const { toast } = useToast();
+  const { token } = useApp();
+  const { companies, activeCompanyId, setActiveCompanyId } = useCompany();
 
   /* ── Filter state ── */
   const [search,        setSearch]        = useState("");
@@ -695,12 +689,36 @@ export default function Customers() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
     watch,
     setValue,
     reset,
   } = useForm<CustomerFields>({ resolver: zodResolver(customerSchema), defaultValues: { ...BLANK_CUSTOMER } });
-  const currentType = watch("type");
+
+  const currentTipoDoc = watch("tipo_documento");
+  const watchedDep     = watch("departamento");
+  const watchedProv    = watch("provincia");
+
+  /* ── Ubigeo cascading options ── */
+  const depOptions = useMemo<ComboboxOption[]>(
+    () => getDepartamentos().map((d) => ({ id: d, title: d })),
+    []
+  );
+  const provOptions = useMemo<ComboboxOption[]>(
+    () => (watchedDep ? getProvincias(watchedDep).map((p) => ({ id: p, title: p })) : []),
+    [watchedDep]
+  );
+  const distOptions = useMemo<ComboboxOption[]>(
+    () => (watchedDep && watchedProv ? getDistritos(watchedDep, watchedProv).map((d) => ({ id: d, title: d })) : []),
+    [watchedDep, watchedProv]
+  );
+
+  /* ── Company options ── */
+  const companyOptions = useMemo<ComboboxOption[]>(
+    () => companies.map((c) => ({ id: String(c.id), title: `${c.razon_social}  ·  ${c.ruc}` })),
+    [companies]
+  );
 
   /* ── Derived data ── */
   const filtered = useMemo(() => {
@@ -730,7 +748,17 @@ export default function Customers() {
 
   function openEdit(c: Client) {
     setActiveClient(c);
-    reset({ type: c.type, rucDni: c.rucDni, name: c.name, email: c.email, phone: c.phone ?? "", address: c.address, segment: c.segment });
+    reset({
+      tipo_documento:   c.type === "empresa" ? "6" : "1",
+      numero_documento: c.rucDni,
+      razon_social:     c.name,
+      email:            c.email,
+      telefono:         c.phone ?? "",
+      direccion:        c.address,
+      departamento:     "",
+      provincia:        "",
+      distrito:         "",
+    });
     setDrawerMode("edit");
   }
 
@@ -741,13 +769,27 @@ export default function Customers() {
   }
 
   const onSave = handleSubmit((data) => {
-    of(null).subscribe({
-      next: () => {
-        const action = drawerMode === "new" ? "registrado" : "actualizado";
-        toast({ variant: "success", title: `Cliente ${action}`, description: data.name });
-        closeDrawer();
-      },
-    });
+    if (drawerMode === "new") {
+      RestApi.securePost(token ?? "", "/api/v1/clients", {
+        company_id: activeCompanyId,
+        ...data,
+      }).subscribe({
+        next: () => {
+          toast({ variant: "success", title: "Cliente registrado", description: data.razon_social });
+          closeDrawer();
+        },
+        error: () => {
+          toast({ variant: "error", title: "Error al registrar", description: "No se pudo crear el cliente." });
+        },
+      });
+    } else {
+      of(null).subscribe({
+        next: () => {
+          toast({ variant: "success", title: "Cliente actualizado", description: data.razon_social });
+          closeDrawer();
+        },
+      });
+    }
   });
 
   function handleExport() {
@@ -892,58 +934,61 @@ export default function Customers() {
         size="md"
       >
         <DrawerForm>
-          {/* Tipo */}
+          {/* Empresa */}
+          <FormGroup>
+            <FormLabel>Empresa</FormLabel>
+            <ComboboxCustom
+              options={companyOptions}
+              value={activeCompanyId ? String(activeCompanyId) : null}
+              onChange={(val) => setActiveCompanyId(Number(val))}
+              placeholder="Selecciona empresa…"
+              searchPlaceholder="Buscar por nombre o RUC…"
+              dataCy="cy-company-select"
+            />
+          </FormGroup>
+
+          {/* Tipo de cliente */}
           <FormGroup>
             <FormLabel>Tipo de cliente</FormLabel>
             <TypeToggle>
-              {(["empresa", "persona"] as ClientType[]).map((t) => (
-                <TypeOption key={t} $active={currentType === t}>
+              {([["6", "corporate_fare", "Empresa"], ["1", "person", "Persona Natural"]] as [string, string, string][]).map(([val, icon, label]) => (
+                <TypeOption key={val} $active={currentTipoDoc === val}>
                   <input
                     type="radio"
-                    name="type"
-                    value={t}
-                    checked={currentType === t}
-                    onChange={() => { setValue("type", t, { shouldValidate: true }); setValue("rucDni", ""); }}
+                    name="tipo_documento"
+                    value={val}
+                    checked={currentTipoDoc === val}
+                    onChange={() => { setValue("tipo_documento", val as "1" | "6", { shouldValidate: true }); setValue("numero_documento", ""); }}
                   />
-                  <Icon name={t === "empresa" ? "corporate_fare" : "person"} size={16} />
-                  {t === "empresa" ? "Empresa" : "Persona Natural"}
+                  <Icon name={icon} size={16} />
+                  {label}
                 </TypeOption>
               ))}
             </TypeToggle>
           </FormGroup>
 
-          {/* RUC / DNI + Segmento */}
-          <FormRow>
-            <FormGroup>
-              <FormLabel>{currentType === "empresa" ? "RUC (11 dígitos)" : "DNI (8 dígitos)"}</FormLabel>
-              <FormInput
-                type="text"
-                maxLength={currentType === "empresa" ? 11 : 8}
-                placeholder={currentType === "empresa" ? "20XXXXXXXXX" : "XXXXXXXX"}
-                {...register("rucDni")}
-                onChange={(e) => setValue("rucDni", e.target.value.replace(/\D/g, ""), { shouldValidate: true })}
-              />
-              {errors.rucDni && <ErrorMsg><Icon name="error" size={14} />{errors.rucDni.message}</ErrorMsg>}
-            </FormGroup>
-            <FormGroup>
-              <FormLabel>Segmento</FormLabel>
-              <FormSelect {...register("segment")}>
-                <option value="nuevo">Nuevo</option>
-                <option value="recurrente">Recurrente</option>
-                <option value="vip">VIP</option>
-              </FormSelect>
-            </FormGroup>
-          </FormRow>
+          {/* Número de documento */}
+          <FormGroup>
+            <FormLabel>{currentTipoDoc === "6" ? "RUC (11 dígitos)" : "DNI (8 dígitos)"}</FormLabel>
+            <FormInput
+              type="text"
+              maxLength={currentTipoDoc === "6" ? 11 : 8}
+              placeholder={currentTipoDoc === "6" ? "20XXXXXXXXX" : "XXXXXXXX"}
+              {...register("numero_documento")}
+              onChange={(e) => setValue("numero_documento", e.target.value.replace(/\D/g, ""), { shouldValidate: true })}
+            />
+            {errors.numero_documento && <ErrorMsg><Icon name="error" size={14} />{errors.numero_documento.message}</ErrorMsg>}
+          </FormGroup>
 
           {/* Razón Social */}
           <FormGroup>
-            <FormLabel>{currentType === "empresa" ? "Razón Social" : "Nombre Completo"}</FormLabel>
+            <FormLabel>{currentTipoDoc === "6" ? "Razón Social" : "Nombre Completo"}</FormLabel>
             <FormInput
               type="text"
-              placeholder={currentType === "empresa" ? "Ej. Empresa S.A.C." : "Ej. Juan Pérez García"}
-              {...register("name")}
+              placeholder={currentTipoDoc === "6" ? "Ej. Empresa S.A.C." : "Ej. Juan Pérez García"}
+              {...register("razon_social")}
             />
-            {errors.name && <ErrorMsg><Icon name="error" size={14} />{errors.name.message}</ErrorMsg>}
+            {errors.razon_social && <ErrorMsg><Icon name="error" size={14} />{errors.razon_social.message}</ErrorMsg>}
           </FormGroup>
 
           {/* Email + Teléfono */}
@@ -961,8 +1006,8 @@ export default function Customers() {
               <FormLabel>Teléfono</FormLabel>
               <FormInput
                 type="tel"
-                placeholder="01-XXXXXXX"
-                {...register("phone")}
+                placeholder="987654321"
+                {...register("telefono")}
               />
             </FormGroup>
           </FormRow>
@@ -972,11 +1017,79 @@ export default function Customers() {
             <FormLabel>Dirección fiscal</FormLabel>
             <FormInput
               type="text"
-              placeholder="Av. Ejemplo 123, Distrito, Ciudad"
-              {...register("address")}
+              placeholder="Av. Ejemplo 123"
+              {...register("direccion")}
             />
-            {errors.address && <ErrorMsg><Icon name="error" size={14} />{errors.address.message}</ErrorMsg>}
+            {errors.direccion && <ErrorMsg><Icon name="error" size={14} />{errors.direccion.message}</ErrorMsg>}
           </FormGroup>
+
+          {/* Ubicación: Departamento → Provincia → Distrito */}
+          <FormGroup>
+            <FormLabel>Departamento</FormLabel>
+            <Controller
+              name="departamento"
+              control={control}
+              render={({ field }) => (
+                <ComboboxCustom
+                  options={depOptions}
+                  value={field.value || null}
+                  onChange={(val) => {
+                    field.onChange(val);
+                    setValue("provincia", "", { shouldValidate: false });
+                    setValue("distrito",  "", { shouldValidate: false });
+                  }}
+                  placeholder="Selecciona departamento…"
+                  searchPlaceholder="Buscar departamento…"
+                  error={errors.departamento?.message}
+                  dataCy="cy-departamento"
+                />
+              )}
+            />
+          </FormGroup>
+
+          <FormRow>
+            <FormGroup>
+              <FormLabel>Provincia</FormLabel>
+              <Controller
+                name="provincia"
+                control={control}
+                render={({ field }) => (
+                  <ComboboxCustom
+                    options={provOptions}
+                    value={field.value || null}
+                    onChange={(val) => {
+                      field.onChange(val);
+                      setValue("distrito", "", { shouldValidate: false });
+                    }}
+                    placeholder="Selecciona provincia…"
+                    searchPlaceholder="Buscar provincia…"
+                    disabled={!watchedDep}
+                    error={errors.provincia?.message}
+                    dataCy="cy-provincia"
+                  />
+                )}
+              />
+            </FormGroup>
+            <FormGroup>
+              <FormLabel>Distrito</FormLabel>
+              <Controller
+                name="distrito"
+                control={control}
+                render={({ field }) => (
+                  <ComboboxCustom
+                    options={distOptions}
+                    value={field.value || null}
+                    onChange={field.onChange}
+                    placeholder="Selecciona distrito…"
+                    searchPlaceholder="Buscar distrito…"
+                    disabled={!watchedProv}
+                    error={errors.distrito?.message}
+                    dataCy="cy-distrito"
+                  />
+                )}
+              />
+            </FormGroup>
+          </FormRow>
         </DrawerForm>
 
         <Drawer.Footer>
