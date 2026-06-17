@@ -1,6 +1,5 @@
 import styled from "styled-components";
-import { NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
-import { PageShell } from "../../components/layout/PageShell";
+import { NavLink, Outlet } from "react-router-dom";
 import { Icon } from "../../components/ui/Icon";
 
 /* ── Sub-navigation bar ──────────────────────────────── */
@@ -59,14 +58,8 @@ const TABS = [
 /* ── Layout ──────────────────────────────────────────── */
 
 export default function InvoicingLayout() {
-  const { pathname } = useLocation();
-
-  if (pathname === "/invoicing" || pathname === "/invoicing/") {
-    return <Navigate to="/invoicing/quotes" replace />;
-  }
-
   return (
-    <PageShell>
+    <>
       <SubNavWrap>
         {TABS.map((t) => (
           <TabLink key={t.to} to={t.to} end>
@@ -78,6 +71,6 @@ export default function InvoicingLayout() {
       <OutletWrapper>
         <Outlet />
       </OutletWrapper>
-    </PageShell>
+    </>
   );
 }

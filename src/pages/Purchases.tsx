@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { motion } from "framer-motion";
 import { staggerContainer, fadeUp } from "../lib/variants";
-import { PageShell } from "../components/layout/PageShell";
+
 import { Table } from "../components/ui/Table";
 import type { ColumnDef } from "../components/ui/Table";
 import { Badge } from "../components/ui/Badge";
@@ -563,7 +563,7 @@ const columns: ColumnDef<Invoice>[] = [
 
 export default function Purchases() {
   return (
-    <PageShell>
+    <>
       <ContentArea>
         {/* Heading */}
         <motion.div variants={fadeUp} initial="hidden" animate="visible">
@@ -711,6 +711,6 @@ export default function Purchases() {
           </motion.div>
         </LowerGrid>
       </ContentArea>
-    </PageShell>
+    </>
   );
 }

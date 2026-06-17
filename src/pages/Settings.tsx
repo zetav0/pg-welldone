@@ -2,7 +2,7 @@ import { useState } from "react";
 import styled from "styled-components";
 import { motion } from "framer-motion";
 import { staggerContainer, fadeUp } from "../lib/variants";
-import { PageShell } from "../components/layout/PageShell";
+
 import { Table } from "../components/ui/Table";
 import type { ColumnDef } from "../components/ui/Table";
 import { Badge } from "../components/ui/Badge";
@@ -777,7 +777,7 @@ export default function Settings() {
   }
 
   return (
-    <PageShell>
+    <>
       <ContentArea>
         {/* Heading */}
         <motion.div variants={fadeUp} initial="hidden" animate="visible">
@@ -1024,6 +1024,6 @@ export default function Settings() {
 
         </BentoGrid>
       </ContentArea>
-    </PageShell>
+    </>
   );
 }

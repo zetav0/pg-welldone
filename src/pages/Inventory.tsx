@@ -2,7 +2,7 @@
 import styled from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
 import { staggerContainer, fadeUp } from "../lib/variants";
-import { PageShell } from "../components/layout/PageShell";
+
 import { Icon } from "../components/ui/Icon";
 import {
   products,
@@ -623,7 +623,7 @@ export default function Inventory() {
       : products.filter((p) => p.category.toLowerCase().includes(activeFilter.toLowerCase()));
 
   return (
-    <PageShell>
+    <>
       <ContentArea>
         {/* Stats */}
         <StatsGrid variants={staggerContainer} initial="hidden" animate="visible">
@@ -806,6 +806,6 @@ export default function Inventory() {
           </AnimatePresence>
         </ContentRow>
       </ContentArea>
-    </PageShell>
+    </>
   );
 }
