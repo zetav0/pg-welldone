@@ -31,7 +31,8 @@ export class RestApi {
     return ajax.getJSON<T>(url, {
       ...(headers || {}),
 
-      Bearer: `${token || accessToken}`,
+      // Bearer: `${token || accessToken}`,TODO
+      Authorization: `Bearer ${token || accessToken}`,
       // ["ngrok-skip-browser-warning"]: "true",
     });
   };
@@ -81,7 +82,6 @@ export class RestApi {
     return ajax
       .post<T>(url, body, {
         ...(headers || {}),
-        // Bearer: `${tokenBearer}`, TODO
         Authorization: `Bearer ${tokenBearer}`,
       })
       .pipe(map((resp: any) => resp.response));
