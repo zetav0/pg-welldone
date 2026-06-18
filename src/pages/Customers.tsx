@@ -680,6 +680,46 @@ export default function Customers() {
   const totalPages = meta?.last_page ?? 1;
   const safePage = Math.min(page, totalPages);
 
+  /* ── Search by document (onBlur del input) ── */
+  const searchByDocument = (docNumber: string, tipoDoc: string) => {
+    const requiredLen = tipoDoc === "6" ? 11 : 8;
+    if (!token || docNumber.length !== requiredLen) return;
+    clearErrors("numero_documento");
+    const base = (import.meta.env.VITE_BACKOFFICE_BASE_URL as string).replace(/\/api$/, "");
+    ajax<{ success: boolean; data: ApiClient }>({
+      url: `${base}/api/v1/clients/search-by-document`,
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: { company_id: activeCompanyId, tipo_documento: tipoDoc, numero_documento: docNumber },
+    }).subscribe({
+      next: ({ response: res }) => {
+        if (!res.success || !res.data) {
+          setError("numero_documento", {
+            type: "manual",
+            message: tipoDoc === "6" ? "RUC no encontrado para esta empresa" : "DNI no encontrado para esta empresa",
+          });
+          return;
+        }
+        const d = res.data;
+        setValue("razon_social", d.razon_social, { shouldValidate: true });
+        setValue("nombre_comercial", d.nombre_comercial ?? "", { shouldValidate: true });
+        setValue("email", d.email, { shouldValidate: true });
+        setValue("telefono", d.telefono ?? "", { shouldValidate: true });
+        setValue("direccion", d.direccion, { shouldValidate: true });
+        setValue("ubigeo", d.ubigeo, { shouldValidate: true });
+        setValue("departamento", d.departamento, { shouldValidate: true });
+        setValue("provincia", d.provincia, { shouldValidate: true });
+        setValue("distrito", d.distrito, { shouldValidate: true });
+      },
+      error: () => {
+        setError("numero_documento", {
+          type: "manual",
+          message: tipoDoc === "6" ? "RUC no encontrado para esta empresa" : "DNI no encontrado para esta empresa",
+        });
+      },
+    });
+  };
+
   /* ── Drawer ── */
   const [drawerMode, setDrawerMode] = useState<DrawerMode>("none");
   const [activeClient, setActiveClient] = useState<ApiClient | null>(null);
@@ -693,11 +733,18 @@ export default function Customers() {
     watch,
     setValue,
     reset,
+    setError,
+    clearErrors,
   } = useForm<CustomerFields>({ resolver: zodResolver(customerSchema), defaultValues: { ...BLANK_CUSTOMER } });
 
   const currentTipoDoc = watch("tipo_documento");
   const watchedDep = watch("departamento");
   const watchedProv = watch("provincia");
+
+  /* ── Reset form when active company changes ── */
+  useEffect(() => {
+    reset({ ...BLANK_CUSTOMER });
+  }, [activeCompanyId, reset]);
 
   /* ── Ubigeo cascading options ── */
   const depOptions = useMemo<SearchSelectOption[]>(
@@ -949,6 +996,7 @@ export default function Customers() {
                 placeholder={currentTipoDoc === "6" ? "20XXXXXXXXX" : "XXXXXXXX"}
                 {...register("numero_documento")}
                 onChange={(e) => setValue("numero_documento", e.target.value.replace(/\D/g, ""), { shouldValidate: true })}
+                onBlur={(e) => searchByDocument(e.target.value.trim(), currentTipoDoc)}
               />
               {errors.numero_documento && <ErrorMsg><Icon name="error" size={14} />{errors.numero_documento.message}</ErrorMsg>}
             </FormGroup>
