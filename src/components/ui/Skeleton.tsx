@@ -25,12 +25,12 @@ const Atom = styled.div<{
   height: ${(p) => p.$h};
   border-radius: ${(p) => p.$r};
   flex-shrink: 0;
-  background-color: ${(p) => p.theme.colors.surface};
+  background-color: ${(p) => p.theme.colors.border};
   background-image: linear-gradient(
     90deg,
-    transparent            0%,
-    rgba(255, 255, 255, 0.07) 50%,
-    transparent            100%
+    transparent              0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent              100%
   );
   background-size: 400% 100%;
   ${(p) => p.$animate && animateCss}

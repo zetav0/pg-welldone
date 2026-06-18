@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate, Outlet, RouterProvider } from "react-router-dom";
 import { ThemeProvider } from "styled-components";
 import { AppProvider } from "./context/AppContext";
+import { CompanyProvider } from "./context/CompanyContext";
 import { ToastProvider } from "./components/common/Toast";
 import { GlobalStyle, theme } from "./theme";
 import { PageShell } from "./components/layout/PageShell";
@@ -63,9 +64,11 @@ export default function App() {
     <ThemeProvider theme={theme}>
       <GlobalStyle />
       <AppProvider>
-        <ToastProvider>
-          <RouterProvider router={router} />
-        </ToastProvider>
+        <CompanyProvider>
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
+        </CompanyProvider>
       </AppProvider>
     </ThemeProvider>
   );

@@ -5,8 +5,8 @@ import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { staggerContainer, fadeUp } from "../lib/variants";
-import { ComboboxCustom } from "../components/common/Combobox";
-import type { ComboboxOption } from "../components/common/Combobox";
+import { SearchSelectCustom } from "../components/common/SearchSelect";
+import type { SearchSelectOption } from "../components/common/SearchSelect";
 import { getDepartamentos, getProvincias, getDistritos } from "../data/ubigeo";
 
 import { Table } from "../components/ui/Table";
@@ -809,7 +809,7 @@ export default function Settings() {
   const departamento = useWatch({ control, name: "departamento" });
   const provincia = useWatch({ control, name: "provincia" });
 
-  const toOptions = (names: string[]): ComboboxOption[] =>
+  const toOptions = (names: string[]): SearchSelectOption[] =>
     names.map((n) => ({ id: n, title: n }));
 
   const departamentoOptions = useMemo(() => toOptions(getDepartamentos()), []);
@@ -998,7 +998,7 @@ export default function Settings() {
                   control={control}
                   name="departamento"
                   render={({ field }) => (
-                    <ComboboxCustom
+                    <SearchSelectCustom
                       ref={field.ref}
                       id="departamento"
                       label="Departamento"
@@ -1021,7 +1021,7 @@ export default function Settings() {
                   control={control}
                   name="provincia"
                   render={({ field }) => (
-                    <ComboboxCustom
+                    <SearchSelectCustom
                       ref={field.ref}
                       id="provincia"
                       label="Provincia"
@@ -1046,7 +1046,7 @@ export default function Settings() {
                   control={control}
                   name="distrito"
                   render={({ field }) => (
-                    <ComboboxCustom
+                    <SearchSelectCustom
                       ref={field.ref}
                       id="distrito"
                       label="Distrito"

@@ -442,10 +442,28 @@ export function Table<T extends object>({
                       $density={density}
                       $bordered={bordered}
                     >
-                      <Skeleton
-                        width={`${65 + ((i * 7 + ci * 13) % 25)}%`}
-                        height="1.4rem"
-                      />
+                      {ci === 0 ? (
+                        /* First col: avatar circle + two text lines */
+                        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                          <Skeleton circle width="3.4rem" />
+                          <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", flex: 1 }}>
+                            <Skeleton width={`${55 + ((i * 11) % 25)}%`} height="1.4rem" />
+                            <Skeleton width={`${40 + ((i * 7) % 20)}%`} height="1.1rem" />
+                          </div>
+                        </div>
+                      ) : ci === columns.length - 1 ? (
+                        /* Last col (actions): two small pill buttons */
+                        <div style={{ display: "flex", gap: "0.6rem" }}>
+                          <Skeleton width="3rem" height="3rem" radius="0.6rem" />
+                          <Skeleton width="3rem" height="3rem" radius="0.6rem" />
+                        </div>
+                      ) : ci % 3 === 2 ? (
+                        /* Badge-like columns: short pill */
+                        <Skeleton width={`${45 + ((i * 5 + ci * 9) % 20)}%`} height="2.2rem" radius="9999px" />
+                      ) : (
+                        /* Default: text bar with varying width */
+                        <Skeleton width={`${55 + ((i * 7 + ci * 13) % 30)}%`} height="1.4rem" />
+                      )}
                     </Td>
                   ))}
                 </BodyTr>
