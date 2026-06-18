@@ -7,7 +7,8 @@ import { z } from "zod";
 import { staggerContainer, fadeUp } from "../lib/variants";
 import { SearchSelectCustom } from "../components/common/SearchSelect";
 import type { SearchSelectOption } from "../components/common/SearchSelect";
-import { getDepartamentos, getProvincias, getDistritos } from "../data/ubigeo";
+import { ubigeoService } from "@/services/ubigeoService";
+import type { UbigeoItem } from "@/services/ubigeoService";
 
 import { Table } from "../components/ui/Table";
 import type { ColumnDef } from "../components/ui/Table";
@@ -774,7 +775,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const { user } = useApp();
+  const { user, token } = useApp();
 
   // The user's company anchors everything (multi-tenant ready). When it exists we
   // load + update that company; otherwise the form creates a new one.
@@ -809,14 +810,55 @@ export default function Settings() {
   const departamento = useWatch({ control, name: "departamento" });
   const provincia = useWatch({ control, name: "provincia" });
 
-  const toOptions = (names: string[]): SearchSelectOption[] =>
-    names.map((n) => ({ id: n, title: n }));
+  const [regiones, setRegiones] = useState<UbigeoItem[]>([]);
+  const [provincias, setProvincias] = useState<UbigeoItem[]>([]);
+  const [distritos, setDistritos] = useState<UbigeoItem[]>([]);
 
-  const departamentoOptions = useMemo(() => toOptions(getDepartamentos()), []);
-  const provinciaOptions = useMemo(() => toOptions(getProvincias(departamento)), [departamento]);
-  const distritoOptions = useMemo(
-    () => toOptions(getDistritos(departamento, provincia)),
-    [departamento, provincia]
+  useEffect(() => {
+    if (!token) return;
+    const sub = ubigeoService.getRegiones(token).subscribe({
+      next: (res) => setRegiones(res.data ?? []),
+      error: () => {},
+    });
+    return () => sub.unsubscribe();
+  }, [token]);
+
+  useEffect(() => {
+    setProvincias([]);
+    setDistritos([]);
+    if (!token || !departamento) return;
+    const regionId = regiones.find((r) => r.nombre === departamento)?.id;
+    if (!regionId) return;
+    const sub = ubigeoService.getProvincias(token, regionId).subscribe({
+      next: (res) => setProvincias(res.data ?? []),
+      error: () => {},
+    });
+    return () => sub.unsubscribe();
+  }, [token, departamento, regiones]);
+
+  useEffect(() => {
+    setDistritos([]);
+    if (!token || !provincia) return;
+    const provinciaId = provincias.find((p) => p.nombre === provincia)?.id;
+    if (!provinciaId) return;
+    const sub = ubigeoService.getDistritos(token, provinciaId).subscribe({
+      next: (res) => setDistritos(res.data ?? []),
+      error: () => {},
+    });
+    return () => sub.unsubscribe();
+  }, [token, provincia, provincias]);
+
+  const departamentoOptions = useMemo<SearchSelectOption[]>(
+    () => regiones.map((r) => ({ id: r.nombre, title: r.nombre })),
+    [regiones]
+  );
+  const provinciaOptions = useMemo<SearchSelectOption[]>(
+    () => provincias.map((p) => ({ id: p.nombre, title: p.nombre })),
+    [provincias]
+  );
+  const distritoOptions = useMemo<SearchSelectOption[]>(
+    () => distritos.map((d) => ({ id: d.nombre, title: d.nombre })),
+    [distritos]
   );
 
   // Load the existing company (if any) and prefill the form.

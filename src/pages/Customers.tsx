@@ -17,7 +17,8 @@ import { Drawer } from "../components/common/Drawer";
 import { useToast } from "../components/common/Toast";
 import { SearchSelectCustom } from "../components/common/SearchSelect";
 import type { SearchSelectOption } from "../components/common/SearchSelect";
-import { getDepartamentos, getProvincias, getDistritos } from "../data/ubigeo";
+import { ubigeoService } from "@/services/ubigeoService";
+import type { UbigeoItem } from "@/services/ubigeoService";
 import { useApp } from "@/context/AppContext";
 import { useCompany } from "@/context/CompanyContext";
 import { RestApi } from "@/services/restApi";
@@ -746,18 +747,56 @@ export default function Customers() {
     reset({ ...BLANK_CUSTOMER });
   }, [activeCompanyId, reset]);
 
-  /* ── Ubigeo cascading options ── */
+  /* ── Ubigeo API state ── */
+  const [regiones, setRegiones] = useState<UbigeoItem[]>([]);
+  const [provincias, setProvincias] = useState<UbigeoItem[]>([]);
+  const [distritos, setDistritos] = useState<UbigeoItem[]>([]);
+
+  useEffect(() => {
+    if (!token) return;
+    const sub = ubigeoService.getRegiones(token).subscribe({
+      next: (res) => setRegiones(res.data ?? []),
+      error: () => {},
+    });
+    return () => sub.unsubscribe();
+  }, [token]);
+
+  useEffect(() => {
+    setProvincias([]);
+    setDistritos([]);
+    if (!token || !watchedDep) return;
+    const regionId = regiones.find((r) => r.nombre === watchedDep)?.id;
+    if (!regionId) return;
+    const sub = ubigeoService.getProvincias(token, regionId).subscribe({
+      next: (res) => setProvincias(res.data ?? []),
+      error: () => {},
+    });
+    return () => sub.unsubscribe();
+  }, [token, watchedDep, regiones]);
+
+  useEffect(() => {
+    setDistritos([]);
+    if (!token || !watchedProv) return;
+    const provinciaId = provincias.find((p) => p.nombre === watchedProv)?.id;
+    if (!provinciaId) return;
+    const sub = ubigeoService.getDistritos(token, provinciaId).subscribe({
+      next: (res) => setDistritos(res.data ?? []),
+      error: () => {},
+    });
+    return () => sub.unsubscribe();
+  }, [token, watchedProv, provincias]);
+
   const depOptions = useMemo<SearchSelectOption[]>(
-    () => getDepartamentos().map((d) => ({ id: d, title: d })),
-    []
+    () => regiones.map((r) => ({ id: r.nombre, title: r.nombre })),
+    [regiones]
   );
   const provOptions = useMemo<SearchSelectOption[]>(
-    () => (watchedDep ? getProvincias(watchedDep).map((p) => ({ id: p, title: p })) : []),
-    [watchedDep]
+    () => provincias.map((p) => ({ id: p.nombre, title: p.nombre })),
+    [provincias]
   );
   const distOptions = useMemo<SearchSelectOption[]>(
-    () => (watchedDep && watchedProv ? getDistritos(watchedDep, watchedProv).map((d) => ({ id: d, title: d })) : []),
-    [watchedDep, watchedProv]
+    () => distritos.map((d) => ({ id: d.nombre, title: d.nombre })),
+    [distritos]
   );
 
   /* ── Company options ── */
