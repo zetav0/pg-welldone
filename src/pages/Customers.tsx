@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { of } from "rxjs";
+import { ajax } from "rxjs/ajax";
 import styled from "styled-components";
 import { motion } from "framer-motion";
 import { staggerContainer, fadeUp } from "../lib/variants";
@@ -700,6 +701,20 @@ export default function Customers() {
   const [search,        setSearch]        = useState("");
   const [segFilter,     setSegFilter]     = useState<"all" | ClientSegment>("all");
   const [statusFilter,  setStatusFilter]  = useState<"all" | ClientStatus>("all");
+
+  /* ── GET /v1/clients ── */
+  useEffect(() => {
+    if (!token) return;
+    const baseUrl = import.meta.env.VITE_BACKOFFICE_BASE_URL as string;
+    const url = `${baseUrl}/v1/clients?per_page=20&search=${encodeURIComponent(search)}`;
+    const sub = ajax
+      .getJSON<unknown>(url, { Authorization: `Bearer ${token}` })
+      .subscribe({
+        next: (res) => console.log("[GET /v1/clients] response →", res),
+        error: (err) => console.error("[GET /v1/clients] error →", err),
+      });
+    return () => sub.unsubscribe();
+  }, [token, search]);
 
   /* ── Pagination ── */
   const [page,     setPage]     = useState(1);
