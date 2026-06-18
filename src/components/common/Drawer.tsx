@@ -164,15 +164,7 @@ function Drawer({
 
             <DialogPrimitive.Content
               asChild
-              onPointerDownOutside={(e) => {
-                const clicked = (e as CustomEvent<{ originalEvent: PointerEvent }>)
-                  .detail?.originalEvent?.target as HTMLElement | null;
-                if (clicked?.closest("[data-search-select-portal]")) {
-                  e.preventDefault();
-                  return;
-                }
-                if (preventClose) e.preventDefault();
-              }}
+              onPointerDownOutside={preventClose ? (e) => e.preventDefault() : undefined}
               onEscapeKeyDown={preventClose ? (e) => e.preventDefault() : undefined}
             >
               <Content
