@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { motion } from "framer-motion";
 import { useForm, Controller, useWatch } from "react-hook-form";
@@ -16,7 +16,8 @@ import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
 import { useToast } from "../components/common/Toast";
 import { InputCustom } from "../components/common/Input";
-import { RestApi } from "@/services/restApi";
+import { companyService } from "@/services/companyService";
+import type { Company, CompanyPayload } from "@/services/companyService";
 import { useApp } from "@/context/AppContext";
 
 /* ── Layout ──────────────────────────────────────────── */
@@ -744,6 +745,24 @@ const PHONE_REGEX = /^[0-9+\s()-]+$/;
 const EMAIL_REGEX = /^[a-zA-Z0-9@._+-]+$/;
 const CRED_REGEX = /^[\s\S]*$/;
 
+/** Map a Company from the API onto the form fields (null → empty string). */
+function companyToFields(c: Company): CompanyFields {
+  return {
+    ruc: c.ruc ?? "",
+    razon_social: c.razon_social ?? "",
+    nombre_comercial: c.nombre_comercial ?? "",
+    direccion: c.direccion ?? "",
+    ubigeo: c.ubigeo ?? "",
+    distrito: c.distrito ?? "",
+    provincia: c.provincia ?? "",
+    departamento: c.departamento ?? "",
+    telefono: c.telefono ?? "",
+    email: c.email ?? "",
+    usuario_sol: c.usuario_sol ?? "",
+    clave_sol: c.clave_sol ?? "",
+  };
+}
+
 /* ── Page ────────────────────────────────────────────── */
 
 export default function Settings() {
@@ -755,7 +774,11 @@ export default function Settings() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const { token } = useApp();
+  const { user } = useApp();
+
+  // The user's company anchors everything (multi-tenant ready). When it exists we
+  // load + update that company; otherwise the form creates a new one.
+  const [companyId, setCompanyId] = useState<number | null>(user?.company_id ?? null);
 
   const {
     register,
@@ -796,6 +819,27 @@ export default function Settings() {
     [departamento, provincia]
   );
 
+  // Load the existing company (if any) and prefill the form.
+  useEffect(() => {
+    if (!companyId) return;
+    const sub = companyService.get(companyId).subscribe({
+      next: (res) => {
+        const company = res.data;
+        if (!company) return;
+        reset(companyToFields(company));
+        setProductionMode(company.modo_produccion === 1 || company.modo_produccion === true);
+      },
+      error: () => {
+        toast({
+          variant: "error",
+          title: "No se pudo cargar la empresa",
+          description: "Inténtalo nuevamente más tarde.",
+        });
+      },
+    });
+    return () => sub.unsubscribe();
+  }, [companyId, reset, toast]);
+
   function handleDiscard() {
     reset();
     setProductionMode(false);
@@ -804,17 +848,19 @@ export default function Settings() {
 
   function onSubmit(data: CompanyFields) {
     setLoading(true);
-    const tokenp = token || localStorage.getItem("token") || "";
-    console.log("token para API:", tokenp);
-    RestApi.securePost(tokenp, "/api/v1/companies", {
-      ...data,
-      modo_produccion: productionMode ? 1 : 0,
-    }).subscribe({
-      next: () => {
+    const payload: CompanyPayload = { ...data, modo_produccion: productionMode ? 1 : 0 };
+    const request = companyId
+      ? companyService.update(companyId, payload)
+      : companyService.create(payload);
+
+    request.subscribe({
+      next: (res) => {
         setLoading(false);
+        // First save returns the new id → subsequent saves become updates.
+        if (!companyId && res?.data?.id) setCompanyId(res.data.id);
         toast({
           variant: "success",
-          title: "Configuración guardada",
+          title: companyId ? "Empresa actualizada" : "Empresa creada",
           description: "Los cambios han sido aplicados correctamente.",
         });
       },
@@ -823,6 +869,23 @@ export default function Settings() {
         const message =
           error instanceof Error ? error.message : "Error al conectar con el servidor";
         toast({ variant: "error", title: "Error al guardar", description: message });
+      },
+    });
+  }
+
+  function handleActivate() {
+    if (!companyId) return;
+    setLoading(true);
+    companyService.activate(companyId).subscribe({
+      next: () => {
+        setLoading(false);
+        toast({ variant: "success", title: "Empresa activada" });
+      },
+      error: (error: unknown) => {
+        setLoading(false);
+        const message =
+          error instanceof Error ? error.message : "Error al conectar con el servidor";
+        toast({ variant: "error", title: "No se pudo activar", description: message });
       },
     });
   }
@@ -848,6 +911,17 @@ export default function Settings() {
               <Button type="button" variant="outline" onClick={handleDiscard} disabled={loading}>
                 Descartar
               </Button>
+              {companyId && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleActivate}
+                  disabled={loading}
+                >
+                  <Icon name="check_circle" size={18} />
+                  Activar
+                </Button>
+              )}
               <Button
                 type="button"
                 variant="primary"
@@ -855,7 +929,7 @@ export default function Settings() {
                 disabled={loading}
               >
                 <Icon name="save" size={18} />
-                {loading ? "Guardando…" : "Guardar Cambios"}
+                {loading ? "Guardando…" : companyId ? "Guardar Cambios" : "Crear Empresa"}
               </Button>
             </HeadingActions>
           </PageHeading>
