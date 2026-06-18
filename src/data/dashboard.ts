@@ -120,6 +120,7 @@ export const sidebarNavItems: NavItem[] = [
   { icon: "receipt_long",   label: "Facturación",  path: "/invoicing"   },
   { icon: "point_of_sale",  label: "Sales",        path: "/sales"       },
   { icon: "shopping_cart",  label: "Purchases",    path: "/purchases"   },
+  { icon: "domain",         label: "Empresas",     path: "/companies"   },
   { icon: "group",          label: "Clientes",     path: "/customers"   },
   { icon: "payments",       label: "Cobranzas",    path: "/collections" },
   { icon: "analytics",      label: "Reports",      path: "#"            },

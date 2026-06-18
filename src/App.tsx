@@ -18,6 +18,7 @@ import Guides from "./pages/invoicing/Guides";
 import CreditNotes from "./pages/invoicing/CreditNotes";
 import DebitNotes from "./pages/invoicing/DebitNotes";
 import Collections from "./pages/Collections";
+import Companies from "./pages/Companies";
 
 function AuthLayout() {
   return (
@@ -36,6 +37,7 @@ const router = createBrowserRouter([
       { path: "/dashboard", element: <Dashboard /> },
       { path: "/inventory", element: <Inventory /> },
       { path: "/sales",     element: <Sales />     },
+      { path: "/companies", element: <Companies /> },
       { path: "/settings",  element: <Settings />  },
       { path: "/purchases",  element: <Purchases />  },
       { path: "/customers",   element: <Customers />   },
