@@ -1,5 +1,12 @@
-import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
-import * as Popover from "@radix-ui/react-popover";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "../ui/Icon";
 
 export interface SearchSelectOption {
@@ -56,10 +63,14 @@ export const SearchSelectCustom = forwardRef<HTMLButtonElement, SearchSelectCust
     },
     ref
   ) {
-    const [open, setOpen] = useState(false);
-    const [query, setQuery] = useState("");
+    const triggerRef  = useRef<HTMLButtonElement | null>(null);
+    const dropdownRef = useRef<HTMLDivElement | null>(null);
+    const searchRef   = useRef<HTMLInputElement | null>(null);
+
+    const [open, setOpen]               = useState(false);
+    const [query, setQuery]             = useState("");
     const [activeIndex, setActiveIndex] = useState(0);
-    const searchRef = useRef<HTMLInputElement | null>(null);
+    const [pos, setPos]                 = useState({ top: 0, left: 0, width: 0 });
 
     const selected = useMemo(
       () => options.find((o) => o.id === value) ?? null,
@@ -72,23 +83,70 @@ export const SearchSelectCustom = forwardRef<HTMLButtonElement, SearchSelectCust
       return options.filter((o) => o.title.toLowerCase().includes(q));
     }, [options, query]);
 
+    /* Merge forwarded ref + internal triggerRef */
+    const mergeRef = useCallback(
+      (node: HTMLButtonElement | null) => {
+        triggerRef.current = node;
+        if (typeof ref === "function") ref(node);
+        else if (ref) (ref as React.MutableRefObject<HTMLButtonElement | null>).current = node;
+      },
+      [ref]
+    );
+
+    const updatePos = useCallback(() => {
+      if (!triggerRef.current) return;
+      const r = triggerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - r.bottom;
+      const dropH = Math.min(filtered.length * 44 + 64, 320);
+      const top = spaceBelow >= dropH ? r.bottom + 4 : r.top - dropH - 4;
+      setPos({ top, left: r.left, width: r.width });
+    }, [filtered.length]);
+
+    useEffect(() => {
+      if (!open) return;
+      updatePos();
+      window.addEventListener("scroll", updatePos, true);
+      window.addEventListener("resize", updatePos);
+      return () => {
+        window.removeEventListener("scroll", updatePos, true);
+        window.removeEventListener("resize", updatePos);
+      };
+    }, [open, updatePos]);
+
+    /* Close on outside click — checks both trigger and portal div */
+    useEffect(() => {
+      if (!open) return;
+      const handler = (e: MouseEvent) => {
+        if (
+          !triggerRef.current?.contains(e.target as Node) &&
+          !dropdownRef.current?.contains(e.target as Node)
+        ) {
+          close();
+        }
+      };
+      document.addEventListener("mousedown", handler);
+      return () => document.removeEventListener("mousedown", handler);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open]);
+
+    /* Focus search when opening */
     useEffect(() => {
       if (open) {
-        setQuery("");
         setActiveIndex(0);
-        const t = setTimeout(() => searchRef.current?.focus(), 30);
+        const t = setTimeout(() => searchRef.current?.focus(), 20);
         return () => clearTimeout(t);
       }
     }, [open]);
 
-    const handleClose = () => {
+    const close = () => {
       setOpen(false);
+      setQuery("");
       onBlur?.();
     };
 
     const handleSelect = (option: SearchSelectOption) => {
       onChange?.(option.id);
-      handleClose();
+      close();
     };
 
     const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -107,7 +165,7 @@ export const SearchSelectCustom = forwardRef<HTMLButtonElement, SearchSelectCust
           break;
         case "Escape":
           e.preventDefault();
-          handleClose();
+          close();
           break;
       }
     };
@@ -133,44 +191,42 @@ export const SearchSelectCustom = forwardRef<HTMLButtonElement, SearchSelectCust
           </label>
         )}
 
-        <Popover.Root
-          open={open}
-          onOpenChange={(v) => {
-            if (!v) handleClose();
-            else setOpen(true);
+        <button
+          ref={mergeRef}
+          type="button"
+          id={id}
+          name={name}
+          data-cy={dataCy}
+          disabled={disabled}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-invalid={Boolean(error)}
+          className={[triggerBase, borderClass, className].filter(Boolean).join(" ")}
+          onClick={() => {
+            if (disabled) return;
+            if (!open) updatePos();
+            setOpen((v) => !v);
           }}
         >
-          <Popover.Trigger asChild>
-            <button
-              ref={ref}
-              type="button"
-              id={id}
-              name={name}
-              data-cy={dataCy}
-              disabled={disabled}
-              aria-haspopup="listbox"
-              aria-expanded={open}
-              aria-invalid={Boolean(error)}
-              className={[triggerBase, borderClass, className].filter(Boolean).join(" ")}
-            >
-              <span className={selected ? "text-text truncate" : "text-text-muted"}>
-                {selected ? selected.title : placeholder}
-              </span>
-              <span className="flex items-center shrink-0 text-text-muted">
-                <Icon name={open ? "expand_less" : "expand_more"} size={20} />
-              </span>
-            </button>
-          </Popover.Trigger>
+          <span className={selected ? "text-text truncate" : "text-text-muted"}>
+            {selected ? selected.title : placeholder}
+          </span>
+          <span className="flex items-center shrink-0 text-text-muted">
+            <Icon name={open ? "expand_less" : "expand_more"} size={20} />
+          </span>
+        </button>
 
-          <Popover.Portal>
-            <Popover.Content
-              sideOffset={4}
-              align="start"
-              avoidCollisions
-              collisionPadding={8}
-              onOpenAutoFocus={(e) => e.preventDefault()}
+        {/* Portal dropdown — fixed position, marked for Drawer's dismissal guard */}
+        {open &&
+          createPortal(
+            <div
+              ref={dropdownRef}
+              data-search-select-portal
               style={{
-                width: "var(--radix-popover-trigger-width)",
+                position: "fixed",
+                top: pos.top,
+                left: pos.left,
+                width: pos.width,
                 zIndex: 9999,
               }}
               className={[
@@ -202,8 +258,8 @@ export const SearchSelectCustom = forwardRef<HTMLButtonElement, SearchSelectCust
                   {query && (
                     <button
                       type="button"
-                      className="shrink-0 flex items-center text-text-muted hover:text-text transition-colors"
                       tabIndex={-1}
+                      className="shrink-0 flex items-center text-text-muted hover:text-text transition-colors"
                       onClick={() => {
                         setQuery("");
                         setActiveIndex(0);
@@ -217,10 +273,7 @@ export const SearchSelectCustom = forwardRef<HTMLButtonElement, SearchSelectCust
               </div>
 
               {/* Options */}
-              <ul
-                role="listbox"
-                className="max-h-[22rem] overflow-y-auto py-[0.4rem]"
-              >
+              <ul role="listbox" className="max-h-[22rem] overflow-y-auto py-[0.4rem]">
                 {filtered.length === 0 ? (
                   <li className="px-[1.6rem] py-[1.4rem] text-[1.3rem] text-text-muted">
                     {emptyMessage}
@@ -238,10 +291,11 @@ export const SearchSelectCustom = forwardRef<HTMLButtonElement, SearchSelectCust
                             "flex w-full items-center justify-between gap-[0.8rem]",
                             "px-[1.4rem] py-[1rem] text-left text-[1.4rem]",
                             "transition-colors duration-100",
-                            isActive   ? "bg-primary/[0.07]"     : "bg-transparent",
+                            isActive   ? "bg-primary/[0.07]"         : "bg-transparent",
                             isSelected ? "font-semibold text-primary" : "text-text",
                           ].join(" ")}
                           onMouseEnter={() => setActiveIndex(i)}
+                          onMouseDown={(e) => e.preventDefault()}
                           onClick={() => handleSelect(option)}
                         >
                           <span className="truncate">{option.title}</span>
@@ -256,9 +310,9 @@ export const SearchSelectCustom = forwardRef<HTMLButtonElement, SearchSelectCust
                   })
                 )}
               </ul>
-            </Popover.Content>
-          </Popover.Portal>
-        </Popover.Root>
+            </div>,
+            document.body
+          )}
 
         {error && (
           <p className="m-0 flex items-center gap-[0.4rem] text-[1.2rem] text-danger">
