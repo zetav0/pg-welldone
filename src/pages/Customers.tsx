@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,7 +18,7 @@ import { useToast } from "../components/common/Toast";
 import { SearchSelectCustom } from "../components/common/SearchSelect";
 import type { SearchSelectOption } from "../components/common/SearchSelect";
 import { ubigeoService } from "@/services/ubigeoService";
-import type { UbigeoItem } from "@/services/ubigeoService";
+import type { UbigeoItem, UbigeoSearchItem } from "@/services/ubigeoService";
 import { useApp } from "@/context/AppContext";
 import { useCompany } from "@/context/CompanyContext";
 import { RestApi } from "@/services/restApi";
@@ -799,6 +799,44 @@ export default function Customers() {
     [distritos]
   );
 
+  /* ── Ubigeo search (campo ubigeo) ── */
+  const [ubigeoQuery, setUbigeoQuery] = useState("");
+  const [ubigeoResults, setUbigeoResults] = useState<UbigeoSearchItem[]>([]);
+  const [ubigeoSearching, setUbigeoSearching] = useState(false);
+  const [ubigeoOpen, setUbigeoOpen] = useState(false);
+  const ubigeoRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (ubigeoQuery.length < 3) { setUbigeoResults([]); return; }
+    setUbigeoSearching(true);
+    const t = setTimeout(() => {
+      const sub = ubigeoService.search(token ?? "", ubigeoQuery).subscribe({
+        next: (res) => { setUbigeoResults(res.data ?? []); setUbigeoSearching(false); setUbigeoOpen(true); },
+        error: () => setUbigeoSearching(false),
+      });
+      return () => sub.unsubscribe();
+    }, 350);
+    return () => clearTimeout(t);
+  }, [ubigeoQuery, token]);
+
+  useEffect(() => {
+    if (!ubigeoOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (!ubigeoRef.current?.contains(e.target as Node)) setUbigeoOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [ubigeoOpen]);
+
+  const handleUbigeoSelect = (item: UbigeoSearchItem) => {
+    setValue("ubigeo", item.id, { shouldValidate: true });
+    if (item.distrito) setValue("distrito", item.distrito, { shouldValidate: true });
+    if (item.provincia) setValue("provincia", item.provincia, { shouldValidate: true });
+    if (item.departamento) setValue("departamento", item.departamento, { shouldValidate: true });
+    setUbigeoQuery(item.nombre);
+    setUbigeoOpen(false);
+  };
+
   /* ── Company options ── */
   const companyOptions = useMemo<SearchSelectOption[]>(
     () => companies.map((c) => ({ id: String(c.id), title: `${c.razon_social}  ·  ${c.ruc}` })),
@@ -808,6 +846,7 @@ export default function Customers() {
   /* ── Handlers ── */
   function openNew() {
     reset({ ...BLANK_CUSTOMER });
+    setUbigeoQuery("");
     setDrawerMode("new");
   }
 
@@ -831,6 +870,7 @@ export default function Customers() {
       provincia: c.provincia,
       distrito: c.distrito,
     });
+    setUbigeoQuery(c.ubigeo);
     setDrawerMode("edit");
   }
 
@@ -838,6 +878,8 @@ export default function Customers() {
     setDrawerMode("none");
     setActiveClient(null);
     reset({ ...BLANK_CUSTOMER });
+    setUbigeoQuery("");
+    setUbigeoResults([]);
   }
 
   const onSave = handleSubmit((data) => {
@@ -1109,13 +1151,60 @@ export default function Customers() {
               </FormGroup>
               <FormGroup style={{ flex: 1 }}>
                 <FormLabel>Ubigeo</FormLabel>
-                <FormInput
-                  type="text"
-                  maxLength={6}
-                  placeholder="150101"
-                  {...register("ubigeo")}
-                  onChange={(e) => setValue("ubigeo", e.target.value.replace(/\D/g, ""), { shouldValidate: true })}
-                />
+                <div ref={ubigeoRef} style={{ position: "relative" }}>
+                  <FormInput
+                    type="text"
+                    placeholder="Buscar distrito…"
+                    value={ubigeoQuery || watch("ubigeo")}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setUbigeoQuery(val);
+                      if (!val) {
+                        setValue("ubigeo", "", { shouldValidate: true });
+                        setUbigeoResults([]);
+                        setUbigeoOpen(false);
+                      }
+                    }}
+                    onFocus={() => { if (ubigeoResults.length > 0) setUbigeoOpen(true); }}
+                  />
+                  {ubigeoSearching && (
+                    <span style={{ position: "absolute", right: "1rem", top: "50%", transform: "translateY(-50%)", opacity: 0.5 }}>
+                      <Icon name="progress_activity" size={16} />
+                    </span>
+                  )}
+                  {ubigeoOpen && ubigeoResults.length > 0 && (
+                    <div style={{
+                      position: "absolute", top: "calc(100% + 0.4rem)", left: 0, right: 0, zIndex: 20,
+                      background: "var(--color-surface, #fff)", border: "1px solid var(--color-border-strong, #c8cdd2)",
+                      borderRadius: "0.8rem", boxShadow: "0 8px 24px -8px rgba(0,0,0,0.18)",
+                      maxHeight: "18rem", overflowY: "auto",
+                    }}>
+                      {ubigeoResults.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          style={{
+                            display: "block", width: "100%", textAlign: "left",
+                            padding: "0.9rem 1.4rem", fontSize: "1.3rem",
+                            background: "transparent", border: "none", cursor: "pointer",
+                            color: "var(--color-text, #191c1e)",
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(113,42,226,0.07)")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                          onClick={() => handleUbigeoSelect(item)}
+                        >
+                          <span style={{ fontWeight: 600 }}>{item.nombre}</span>
+                          {(item.provincia || item.departamento) && (
+                            <span style={{ opacity: 0.55, marginLeft: "0.6rem" }}>
+                              {[item.provincia, item.departamento].filter(Boolean).join(" · ")}
+                            </span>
+                          )}
+                          <span style={{ float: "right", opacity: 0.4, fontSize: "1.1rem" }}>{item.id}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 {errors.ubigeo && <ErrorMsg><Icon name="error" size={14} />{errors.ubigeo.message}</ErrorMsg>}
               </FormGroup>
             </FormRow>

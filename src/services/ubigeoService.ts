@@ -5,8 +5,15 @@ export interface UbigeoItem {
   nombre: string;
 }
 
-const base = () =>
-  (import.meta.env.VITE_BACKOFFICE_BASE_URL as string);
+export interface UbigeoSearchItem {
+  id: string;
+  nombre: string;
+  distrito?: string;
+  provincia?: string;
+  departamento?: string;
+}
+
+const base = () => (import.meta.env.VITE_BACKOFFICE_BASE_URL as string);
 
 const headers = (token: string) => ({ Authorization: `Bearer ${token}` });
 
@@ -26,6 +33,12 @@ export const ubigeoService = {
   getDistritos: (token: string, provinciaId: string) =>
     ajax.getJSON<{ success: boolean; data: UbigeoItem[] }>(
       `${base()}/api/v1/ubigeos/distritos?provincia_id=${provinciaId}`,
+      headers(token)
+    ),
+
+  search: (token: string, q: string) =>
+    ajax.getJSON<{ success: boolean; data: UbigeoSearchItem[] }>(
+      `${base()}/v1/ubigeos/search?q=${encodeURIComponent(q)}`,
       headers(token)
     ),
 };
