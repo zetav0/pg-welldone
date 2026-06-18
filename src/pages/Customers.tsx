@@ -10,7 +10,6 @@ import { staggerContainer, fadeUp } from "../lib/variants";
 import { Table } from "../components/ui/Table";
 import type { ColumnDef } from "../components/ui/Table";
 import { Badge } from "../components/ui/Badge";
-import type { BadgeVariant } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
 import { Pagination } from "../components/ui/Pagination";
@@ -22,8 +21,34 @@ import { getDepartamentos, getProvincias, getDistritos } from "../data/ubigeo";
 import { useApp } from "@/context/AppContext";
 import { useCompany } from "@/context/CompanyContext";
 import { RestApi } from "@/services/restApi";
-import { clients, customerKpis } from "../data/customers";
-import type { Client, ClientSegment, ClientStatus, ClientType } from "../data/customers";
+/* ── API types ───────────────────────────────────────── */
+
+interface ApiClient {
+  id: number;
+  tipo_documento: "1" | "6";
+  numero_documento: string;
+  razon_social: string;
+  nombre_comercial: string | null;
+  direccion: string;
+  ubigeo: string;
+  distrito: string;
+  provincia: string;
+  departamento: string;
+  telefono: string | null;
+  email: string;
+  activo: boolean;
+  created_at: string;
+  updated_at: string;
+  company_id: number;
+  company: { id: number; ruc: string; razon_social: string };
+}
+
+interface ApiMeta {
+  total: number;
+  per_page: number;
+  current_page: number;
+  last_page: number;
+}
 
 /* ── Helpers ─────────────────────────────────────────── */
 
@@ -33,28 +58,6 @@ function getInitials(name: string): string {
   return (words[0][0] + words[words.length - 1][0]).toUpperCase();
 }
 
-const SEGMENT_LABEL: Record<ClientSegment, string> = {
-  vip:        "VIP",
-  recurrente: "Recurrente",
-  nuevo:      "Nuevo",
-};
-const SEGMENT_VARIANT: Record<ClientSegment, BadgeVariant> = {
-  vip:        "warning",
-  recurrente: "primary",
-  nuevo:      "neutral",
-};
-const STATUS_LABEL: Record<ClientStatus, string> = {
-  al_dia:    "Al día",
-  con_deuda: "Con Deuda",
-};
-const STATUS_VARIANT: Record<ClientStatus, BadgeVariant> = {
-  al_dia:    "success",
-  con_deuda: "danger",
-};
-const TYPE_LABEL: Record<ClientType, string> = {
-  empresa: "Empresa",
-  persona: "Persona",
-};
 
 /* ── Styled components ───────────────────────────────── */
 
@@ -214,36 +217,6 @@ const SearchInput = styled.input`
   }
 `;
 
-const FilterDivider = styled.div`
-  width: 1px;
-  height: 2.4rem;
-  background: ${(p) => p.theme.colors.border};
-  flex-shrink: 0;
-`;
-
-const FilterChips = styled.div`
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-`;
-
-const FilterChip = styled.button<{ $active: boolean }>`
-  padding: 0.5rem 1.4rem;
-  border-radius: 0.8rem;
-  font-size: 1.3rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-  border: 1px solid ${(p) => (p.$active ? "transparent" : p.theme.colors.border)};
-  background: ${(p) => (p.$active ? p.theme.colors.primary : p.theme.colors.surface)};
-  color: ${(p) => (p.$active ? p.theme.colors.white : p.theme.colors.textMuted)};
-
-  &:not([disabled]):hover {
-    background: ${(p) => p.$active ? p.theme.colors.primary : p.theme.colors.chipBg};
-    color: ${(p) => p.$active ? p.theme.colors.white : p.theme.colors.text};
-  }
-`;
 
 const FilterActions = styled.div`
   display: flex;
@@ -538,15 +511,6 @@ const SectionTitle = styled.h4`
   color: ${(p) => p.theme.colors.textMuted};
 `;
 
-const DebtCard = styled.div<{ $hasDebt: boolean }>`
-  padding: 1.6rem 2rem;
-  border-radius: 1.2rem;
-  border: 1px solid ${(p) => p.$hasDebt ? p.theme.colors.dangerBg : p.theme.colors.successBg};
-  background: ${(p) => p.$hasDebt ? p.theme.colors.dangerBg : p.theme.colors.successBg};
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-`;
 
 const ErrorMsg = styled.p`
   margin: 0;
@@ -557,11 +521,6 @@ const ErrorMsg = styled.p`
   gap: 0.4rem;
 `;
 
-const DebtAmount = styled.span<{ $hasDebt: boolean }>`
-  font-size: 2rem;
-  font-weight: 900;
-  color: ${(p) => p.$hasDebt ? p.theme.colors.danger : p.theme.colors.success};
-`;
 
 /* ── Avatar color pool ───────────────────────────────── */
 
@@ -574,69 +533,59 @@ const AVATAR_COLORS = [
   "rgba(20,184,166,0.1)",
 ];
 
-function avatarColor(id: string): string {
-  const idx = parseInt(id, 10) % AVATAR_COLORS.length;
-  return AVATAR_COLORS[idx];
+function avatarColor(id: number): string {
+  return AVATAR_COLORS[id % AVATAR_COLORS.length];
 }
 
 /* ── Columns ─────────────────────────────────────────── */
 
 function buildColumns(
-  onView: (c: Client) => void,
-  onEdit: (c: Client) => void,
-): ColumnDef<Client>[] {
+  onView: (c: ApiClient) => void,
+  onEdit: (c: ApiClient) => void,
+): ColumnDef<ApiClient>[] {
   return [
     {
-      key: "name",
+      key: "razon_social",
       header: "Cliente / Razón Social",
       sortable: true,
       render: (row) => (
         <ClientCell>
           <ClientAvatar $color={avatarColor(row.id)}>
-            {getInitials(row.name)}
+            {getInitials(row.razon_social)}
           </ClientAvatar>
           <ClientInfo>
-            <ClientName>{row.name}</ClientName>
+            <ClientName>{row.razon_social}</ClientName>
             <ClientEmail>{row.email}</ClientEmail>
           </ClientInfo>
         </ClientCell>
       ),
     },
     {
-      key: "rucDni",
+      key: "numero_documento",
       header: "RUC / DNI",
       sortable: true,
-      render: (row) => <RucText>{row.rucDni}</RucText>,
+      render: (row) => <RucText>{row.numero_documento}</RucText>,
     },
     {
-      key: "type",
+      key: "tipo_documento",
       header: "Tipo",
       render: (row) => (
-        <Badge variant={row.type === "empresa" ? "primary" : "neutral"} size="sm">
-          {TYPE_LABEL[row.type]}
+        <Badge variant={row.tipo_documento === "6" ? "primary" : "neutral"} size="sm">
+          {row.tipo_documento === "6" ? "Empresa" : "Persona"}
         </Badge>
       ),
     },
     {
-      key: "segment",
-      header: "Segmento",
-      render: (row) => (
-        <Badge variant={SEGMENT_VARIANT[row.segment]} size="sm" dot>
-          {SEGMENT_LABEL[row.segment]}
-        </Badge>
-      ),
+      key: "telefono",
+      header: "Teléfono",
+      render: (row) => row.telefono ?? "—",
     },
     {
-      key: "lastPurchase",
-      header: "Última Compra",
-      sortable: true,
-    },
-    {
-      key: "status",
+      key: "activo",
       header: "Estado",
       render: (row) => (
-        <Badge variant={STATUS_VARIANT[row.status]} size="sm" pill>
-          {STATUS_LABEL[row.status]}
+        <Badge variant={row.activo ? "success" : "neutral"} size="sm" pill>
+          {row.activo ? "Activo" : "Inactivo"}
         </Badge>
       ),
     },
@@ -660,17 +609,17 @@ function buildColumns(
 /* ── Form schema ─────────────────────────────────────── */
 
 const customerSchema = z.object({
-  tipo_documento:    z.enum(["1", "6"]),
-  numero_documento:  z.string(),
-  razon_social:      z.string().min(3, "Mínimo 3 caracteres"),
-  nombre_comercial:  z.string().optional().or(z.literal("")),
-  email:             z.string().email("Correo electrónico inválido"),
-  telefono:          z.string().optional().or(z.literal("")),
-  direccion:         z.string().min(5, "Dirección requerida"),
-  ubigeo:            z.string().regex(/^\d{6}$/, "Código ubigeo de 6 dígitos (ej. 150101)"),
-  departamento:      z.string().min(2, "Selecciona un departamento"),
-  provincia:         z.string().min(2, "Selecciona una provincia"),
-  distrito:          z.string().min(2, "Selecciona un distrito"),
+  tipo_documento: z.enum(["1", "6"]),
+  numero_documento: z.string(),
+  razon_social: z.string().min(3, "Mínimo 3 caracteres"),
+  nombre_comercial: z.string().optional().or(z.literal("")),
+  email: z.string().email("Correo electrónico inválido"),
+  telefono: z.string().optional().or(z.literal("")),
+  direccion: z.string().min(5, "Dirección requerida"),
+  ubigeo: z.string().regex(/^\d{6}$/, "Código ubigeo de 6 dígitos (ej. 150101)"),
+  departamento: z.string().min(2, "Selecciona un departamento"),
+  provincia: z.string().min(2, "Selecciona una provincia"),
+  distrito: z.string().min(2, "Selecciona un distrito"),
 }).superRefine((d, ctx) => {
   if (d.tipo_documento === "6") {
     if (!/^\d{11}$/.test(d.numero_documento))
@@ -697,32 +646,43 @@ export default function Customers() {
   const { token } = useApp();
   const { companies, activeCompanyId, setActiveCompanyId } = useCompany();
 
-  /* ── Filter state ── */
-  const [search,        setSearch]        = useState("");
-  const [segFilter,     setSegFilter]     = useState<"all" | ClientSegment>("all");
-  const [statusFilter,  setStatusFilter]  = useState<"all" | ClientStatus>("all");
+  /* ── API state ── */
+  const [apiClients, setApiClients] = useState<ApiClient[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [meta, setMeta] = useState<ApiMeta | null>(null);
+
+  /* ── Filter / pagination state ── */
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(20);
 
   /* ── GET /v1/clients ── */
   useEffect(() => {
     if (!token) return;
+    setLoading(true);
     const baseUrl = import.meta.env.VITE_BACKOFFICE_BASE_URL as string;
-    const url = `${baseUrl}/v1/clients?per_page=20&search=${encodeURIComponent(search)}`;
+    const url = `${baseUrl}/api/v1/clients?per_page=${pageSize}&page=${page}&search=${encodeURIComponent(search)}`;
     const sub = ajax
-      .getJSON<unknown>(url, { Authorization: `Bearer ${token}` })
+      .getJSON<{ success: boolean; data: ApiClient[]; meta: ApiMeta }>(url, {
+        Authorization: `Bearer ${token}`,
+      })
       .subscribe({
-        next: (res) => console.log("[GET /v1/clients] response →", res),
-        error: (err) => console.error("[GET /v1/clients] error →", err),
+        next: (res) => {
+          setApiClients(res.data ?? []);
+          setMeta(res.meta ?? null);
+          setLoading(false);
+        },
+        error: () => setLoading(false),
       });
     return () => sub.unsubscribe();
-  }, [token, search]);
+  }, [token, search, page, pageSize]);
 
-  /* ── Pagination ── */
-  const [page,     setPage]     = useState(1);
-  const [pageSize]              = useState(10);
+  const totalPages = meta?.last_page ?? 1;
+  const safePage = Math.min(page, totalPages);
 
   /* ── Drawer ── */
-  const [drawerMode,  setDrawerMode]  = useState<DrawerMode>("none");
-  const [activeClient, setActiveClient] = useState<Client | null>(null);
+  const [drawerMode, setDrawerMode] = useState<DrawerMode>("none");
+  const [activeClient, setActiveClient] = useState<ApiClient | null>(null);
 
   /* ── Form (New / Edit) ── */
   const {
@@ -736,8 +696,8 @@ export default function Customers() {
   } = useForm<CustomerFields>({ resolver: zodResolver(customerSchema), defaultValues: { ...BLANK_CUSTOMER } });
 
   const currentTipoDoc = watch("tipo_documento");
-  const watchedDep     = watch("departamento");
-  const watchedProv    = watch("provincia");
+  const watchedDep = watch("departamento");
+  const watchedProv = watch("provincia");
 
   /* ── Ubigeo cascading options ── */
   const depOptions = useMemo<SearchSelectOption[]>(
@@ -759,46 +719,31 @@ export default function Customers() {
     [companies]
   );
 
-  /* ── Derived data ── */
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return clients.filter((c) => {
-      const matchSearch = !q || c.name.toLowerCase().includes(q) || c.rucDni.includes(q) || c.email.toLowerCase().includes(q);
-      const matchSeg    = segFilter === "all"    || c.segment === segFilter;
-      const matchStatus = statusFilter === "all" || c.status  === statusFilter;
-      return matchSearch && matchSeg && matchStatus;
-    });
-  }, [search, segFilter, statusFilter]);
-
-  const totalPages  = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const safePage    = Math.min(page, totalPages);
-  const paginated   = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
-
   /* ── Handlers ── */
   function openNew() {
     reset({ ...BLANK_CUSTOMER });
     setDrawerMode("new");
   }
 
-  function openDetail(c: Client) {
+  function openDetail(c: ApiClient) {
     setActiveClient(c);
     setDrawerMode("detail");
   }
 
-  function openEdit(c: Client) {
+  function openEdit(c: ApiClient) {
     setActiveClient(c);
     reset({
-      tipo_documento:   c.type === "empresa" ? "6" : "1",
-      numero_documento: c.rucDni,
-      razon_social:     c.name,
-      nombre_comercial: "",
-      email:            c.email,
-      telefono:         c.phone ?? "",
-      direccion:        c.address,
-      ubigeo:           "",
-      departamento:     "",
-      provincia:        "",
-      distrito:         "",
+      tipo_documento: c.tipo_documento,
+      numero_documento: c.numero_documento,
+      razon_social: c.razon_social,
+      nombre_comercial: c.nombre_comercial ?? "",
+      email: c.email,
+      telefono: c.telefono ?? "",
+      direccion: c.direccion,
+      ubigeo: c.ubigeo,
+      departamento: c.departamento,
+      provincia: c.provincia,
+      distrito: c.distrito,
     });
     setDrawerMode("edit");
   }
@@ -870,35 +815,33 @@ export default function Customers() {
         <KpiGrid variants={staggerContainer} initial="hidden" animate="visible">
           <KpiCard variants={fadeUp}>
             <KpiIcon><Icon name="groups" size={56} /></KpiIcon>
-            <KpiLabel>Total Clientes Activos</KpiLabel>
-            <KpiValue>{customerKpis.totalActive.toLocaleString()}</KpiValue>
-            <KpiSub style={{ color: "var(--color-success, #16a34a)", fontWeight: 700 }}>+12% este mes</KpiSub>
+            <KpiLabel>Total Clientes</KpiLabel>
+            <KpiValue>{(meta?.total ?? 0).toLocaleString()}</KpiValue>
+            <KpiSub>Registrados en el sistema</KpiSub>
             <KpiProgress>
-              <KpiProgressBar $pct={75} />
+              <KpiProgressBar $pct={100} />
             </KpiProgress>
           </KpiCard>
 
           <KpiCard variants={fadeUp}>
-            <KpiIcon><Icon name="payments" size={56} /></KpiIcon>
-            <KpiLabel>Deuda Total por Cobrar</KpiLabel>
-            <KpiValue $color="#ba1a1a">
-              S/ {(customerKpis.totalDebt / 1000).toFixed(1)}k
-            </KpiValue>
-            <KpiSub>{customerKpis.debtorCount} clientes con deuda pendiente</KpiSub>
+            <KpiIcon><Icon name="corporate_fare" size={56} /></KpiIcon>
+            <KpiLabel>Empresas (RUC)</KpiLabel>
+            <KpiValue>{apiClients.filter((c) => c.tipo_documento === "6").length}</KpiValue>
+            <KpiSub>En la página actual</KpiSub>
           </KpiCard>
 
           <KpiCard variants={fadeUp}>
-            <KpiIcon><Icon name="workspace_premium" size={56} /></KpiIcon>
-            <KpiLabel>Segmento VIP</KpiLabel>
-            <KpiValue>{customerKpis.vipCount}</KpiValue>
-            <KpiSub>Clientes con mayor recurrencia</KpiSub>
+            <KpiIcon><Icon name="person" size={56} /></KpiIcon>
+            <KpiLabel>Personas Naturales</KpiLabel>
+            <KpiValue>{apiClients.filter((c) => c.tipo_documento === "1").length}</KpiValue>
+            <KpiSub>En la página actual</KpiSub>
           </KpiCard>
 
           <KpiCard variants={fadeUp}>
             <KpiIcon><Icon name="verified" size={56} /></KpiIcon>
-            <KpiLabel>Compliance SUNAT</KpiLabel>
-            <KpiValue>{customerKpis.compliance}%</KpiValue>
-            <KpiSub>Documentación al día</KpiSub>
+            <KpiLabel>Activos</KpiLabel>
+            <KpiValue>{apiClients.filter((c) => c.activo).length}</KpiValue>
+            <KpiSub>En la página actual</KpiSub>
           </KpiCard>
         </KpiGrid>
 
@@ -913,31 +856,8 @@ export default function Customers() {
             />
           </SearchBox>
 
-          <FilterDivider />
-
-          <FilterChips>
-            {(["all", "vip", "recurrente", "nuevo"] as const).map((s) => (
-              <FilterChip key={s} $active={segFilter === s} onClick={() => { setSegFilter(s); setPage(1); }}>
-                {s === "all" ? "Todos" : SEGMENT_LABEL[s]}
-              </FilterChip>
-            ))}
-          </FilterChips>
-
-          <FilterDivider />
-
-          <FilterChips>
-            {(["all", "al_dia", "con_deuda"] as const).map((s) => (
-              <FilterChip key={s} $active={statusFilter === s} onClick={() => { setStatusFilter(s); setPage(1); }}>
-                {s === "all" ? "Todos" : STATUS_LABEL[s]}
-              </FilterChip>
-            ))}
-          </FilterChips>
-
           <FilterActions>
-            <IconBtn title="Filtros avanzados">
-              <Icon name="filter_list" size={18} />
-            </IconBtn>
-            <IconBtn title="Ordenar" onClick={() => { setSearch(""); setSegFilter("all"); setStatusFilter("all"); setPage(1); }}>
+            <IconBtn title="Limpiar búsqueda" onClick={() => { setSearch(""); setPage(1); }}>
               <Icon name="filter_alt_off" size={18} />
             </IconBtn>
           </FilterActions>
@@ -945,20 +865,21 @@ export default function Customers() {
 
         {/* Table */}
         <TableCard>
-          <Table<Client>
-            data={paginated}
+          <Table<ApiClient>
+            data={apiClients}
             keyField="id"
             columns={columns}
             onRowClick={openDetail}
             density="default"
-            emptyMessage="No se encontraron clientes con los filtros aplicados."
+            loading={loading}
+            emptyMessage="No se encontraron clientes."
           />
 
           <PaginationRow>
             <Pagination.Info
               page={safePage}
               pageSize={pageSize}
-              totalItems={filtered.length}
+              totalItems={meta?.total ?? 0}
             />
             <Pagination.Pages
               page={safePage}
@@ -974,7 +895,7 @@ export default function Customers() {
         open={drawerMode === "new" || drawerMode === "edit"}
         onClose={closeDrawer}
         title={drawerMode === "new" ? "Nuevo Cliente" : "Editar Cliente"}
-        description={drawerMode === "new" ? "Completa los datos para registrar un nuevo cliente." : `Actualizando datos de ${activeClient?.name ?? ""}`}
+        description={drawerMode === "new" ? "Completa los datos para registrar un nuevo cliente." : `Actualizando datos de ${activeClient?.razon_social ?? ""}`}
         size="md"
       >
         <DrawerForm>
@@ -1124,7 +1045,7 @@ export default function Customers() {
                     onChange={(val) => {
                       field.onChange(val);
                       setValue("provincia", "", { shouldValidate: false });
-                      setValue("distrito",  "", { shouldValidate: false });
+                      setValue("distrito", "", { shouldValidate: false });
                     }}
                     placeholder="Selecciona departamento…"
                     searchPlaceholder="Buscar departamento…"
@@ -1199,74 +1120,53 @@ export default function Customers() {
           size="md"
         >
           <DetailBody>
-            {/* Header */}
             <DetailHeader>
               <DetailAvatar $color={avatarColor(activeClient.id)}>
-                {getInitials(activeClient.name)}
+                {getInitials(activeClient.razon_social)}
               </DetailAvatar>
               <DetailMeta>
-                <DetailName>{activeClient.name}</DetailName>
+                <DetailName>{activeClient.razon_social}</DetailName>
                 <DetailSub>{activeClient.email}</DetailSub>
               </DetailMeta>
             </DetailHeader>
 
             <DetailBadges>
-              <Badge variant={SEGMENT_VARIANT[activeClient.segment]} dot>
-                {SEGMENT_LABEL[activeClient.segment]}
+              <Badge variant={activeClient.tipo_documento === "6" ? "primary" : "neutral"}>
+                {activeClient.tipo_documento === "6" ? "Empresa (RUC)" : "Persona Natural (DNI)"}
               </Badge>
-              <Badge variant={STATUS_VARIANT[activeClient.status]} pill>
-                {STATUS_LABEL[activeClient.status]}
-              </Badge>
-              <Badge variant={activeClient.type === "empresa" ? "primary" : "neutral"}>
-                {TYPE_LABEL[activeClient.type]}
+              <Badge variant={activeClient.activo ? "success" : "neutral"} pill>
+                {activeClient.activo ? "Activo" : "Inactivo"}
               </Badge>
             </DetailBadges>
 
-            {/* Info grid */}
             <div>
               <SectionTitle>Información General</SectionTitle>
               <InfoGrid>
                 <InfoItem>
-                  <InfoItemLabel>{activeClient.type === "empresa" ? "RUC" : "DNI"}</InfoItemLabel>
-                  <InfoItemValue>{activeClient.rucDni}</InfoItemValue>
+                  <InfoItemLabel>{activeClient.tipo_documento === "6" ? "RUC" : "DNI"}</InfoItemLabel>
+                  <InfoItemValue>{activeClient.numero_documento}</InfoItemValue>
                 </InfoItem>
                 <InfoItem>
                   <InfoItemLabel>Teléfono</InfoItemLabel>
-                  <InfoItemValue>{activeClient.phone}</InfoItemValue>
+                  <InfoItemValue>{activeClient.telefono ?? "—"}</InfoItemValue>
                 </InfoItem>
                 <InfoItem>
-                  <InfoItemLabel>Última Compra</InfoItemLabel>
-                  <InfoItemValue>{activeClient.lastPurchase}</InfoItemValue>
+                  <InfoItemLabel>Empresa</InfoItemLabel>
+                  <InfoItemValue>{activeClient.company.razon_social}</InfoItemValue>
                 </InfoItem>
                 <InfoItem>
-                  <InfoItemLabel>Segmento</InfoItemLabel>
-                  <InfoItemValue>{SEGMENT_LABEL[activeClient.segment]}</InfoItemValue>
+                  <InfoItemLabel>Ubigeo</InfoItemLabel>
+                  <InfoItemValue>{activeClient.ubigeo}</InfoItemValue>
                 </InfoItem>
                 <InfoItem style={{ gridColumn: "1 / -1" }}>
                   <InfoItemLabel>Dirección Fiscal</InfoItemLabel>
-                  <InfoItemValue>{activeClient.address}</InfoItemValue>
+                  <InfoItemValue>{activeClient.direccion}</InfoItemValue>
+                </InfoItem>
+                <InfoItem style={{ gridColumn: "1 / -1" }}>
+                  <InfoItemLabel>Ubicación</InfoItemLabel>
+                  <InfoItemValue>{activeClient.distrito}, {activeClient.provincia}, {activeClient.departamento}</InfoItemValue>
                 </InfoItem>
               </InfoGrid>
-            </div>
-
-            {/* Deuda */}
-            <div>
-              <SectionTitle>Estado Financiero</SectionTitle>
-              <DebtCard $hasDebt={activeClient.totalDebt > 0}>
-                <div>
-                  <p style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, opacity: 0.7 }}>
-                    {activeClient.totalDebt > 0 ? "Deuda pendiente" : "Sin deuda pendiente"}
-                  </p>
-                  <DebtAmount $hasDebt={activeClient.totalDebt > 0}>
-                    S/ {activeClient.totalDebt.toLocaleString()}
-                  </DebtAmount>
-                </div>
-                <Icon
-                  name={activeClient.totalDebt > 0 ? "warning" : "check_circle"}
-                  size={28}
-                  filled
-                />
-              </DebtCard>
             </div>
           </DetailBody>
 
